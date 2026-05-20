@@ -202,8 +202,8 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-[#080a0f] text-slate-100">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <header className="rounded-lg border border-slate-800 bg-slate-950 px-5 py-5">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
+        <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm text-cyan-300">LatYar Ledger & KPay Automation</p>
@@ -237,7 +237,39 @@ export default function Dashboard() {
           ) : null}
         </header>
 
-        <section className="rounded-lg border border-slate-800 bg-slate-950 p-5">
+        <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4 lg:hidden">
+          <h2 className="text-base font-semibold text-white">Customer အသစ်ထည့်ရန်</h2>
+          <form className="mt-3 grid gap-3" onSubmit={createCustomer}>
+            <input
+              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+              placeholder="အမည်"
+              value={newCustomer.name}
+              onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
+              required
+            />
+            <input
+              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+              inputMode="tel"
+              placeholder="ဖုန်းနံပါတ်"
+              value={newCustomer.phone}
+              onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
+            />
+            <input
+              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+              inputMode="numeric"
+              placeholder="အစ လက်ကျန်အကြွေး"
+              value={newCustomer.current_balance}
+              onChange={(event) =>
+                setNewCustomer({ ...newCustomer, current_balance: event.target.value })
+              }
+            />
+            <button className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
+              Add Customer
+            </button>
+          </form>
+        </section>
+
+        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white">Unverified KPay Bucket</h2>
@@ -246,7 +278,7 @@ export default function Dashboard() {
               </p>
             </div>
             <button
-              className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-cyan-500 hover:text-cyan-200"
+              className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500 hover:text-cyan-200"
               onClick={() => loadDashboard().catch((error) => setMessage(error.message))}
             >
               Refresh
@@ -294,31 +326,33 @@ export default function Dashboard() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-[minmax(280px,380px)_1fr]">
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
+          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
             <h2 className="text-lg font-semibold text-white">Customer List</h2>
             <input
-              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
               placeholder="အမည် သို့မဟုတ် ဖုန်းနံပါတ် ရှာရန်"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
 
-            <form className="mt-4 grid gap-2 rounded-lg border border-slate-800 p-3" onSubmit={createCustomer}>
+            <form className="mt-4 hidden gap-3 rounded-lg border border-slate-800 p-3 sm:grid" onSubmit={createCustomer}>
               <p className="text-sm font-medium text-slate-200">Customer အသစ်ထည့်ရန်</p>
               <input
-                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
                 placeholder="အမည်"
                 value={newCustomer.name}
                 onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
+                required
               />
               <input
-                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
+                inputMode="tel"
                 placeholder="ဖုန်း"
                 value={newCustomer.phone}
                 onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
               />
               <input
-                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
                 inputMode="numeric"
                 placeholder="အစ လက်ကျန်အကြွေး"
                 value={newCustomer.current_balance}
@@ -326,12 +360,12 @@ export default function Dashboard() {
                   setNewCustomer({ ...newCustomer, current_balance: event.target.value })
                 }
               />
-              <button className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-white">
+              <button className="min-h-11 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-white">
                 Add Customer
               </button>
             </form>
 
-            <div className="mt-4 flex max-h-[520px] flex-col gap-2 overflow-auto pr-1">
+            <div className="mt-4 flex max-h-[58vh] flex-col gap-3 overflow-auto pr-1 sm:max-h-[520px] sm:gap-2">
               {customers.map((customer) => {
                 const active = selectedCustomerId === customer.id;
                 const hasDebt = customer.current_balance > 0;
@@ -345,7 +379,7 @@ export default function Dashboard() {
                     }`}
                   >
                     <button
-                      className="w-full text-left"
+                      className="min-h-16 w-full text-left"
                       onClick={() => setSelectedCustomerId(customer.id)}
                     >
                       <div className="flex items-center justify-between gap-3">
@@ -361,19 +395,19 @@ export default function Dashboard() {
                           }`}
                         />
                       </div>
-                      <p className={`mt-2 text-sm ${hasDebt ? "text-rose-200" : "text-emerald-200"}`}>
+                      <p className={`mt-2 text-base font-semibold sm:text-sm ${hasDebt ? "text-rose-200" : "text-emerald-200"}`}>
                         {formatMoney(customer.current_balance)}
                       </p>
                     </button>
                     <div className="mt-3 flex gap-2 border-t border-slate-800 pt-3">
                       <button
-                        className="flex-1 rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        className="min-h-11 flex-1 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
                         onClick={() => openEditCustomer(customer)}
                       >
                         Edit
                       </button>
                       <button
-                        className="flex-1 rounded-md border border-rose-900/70 px-3 py-2 text-xs font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        className="min-h-11 flex-1 rounded-md border border-rose-900/70 px-3 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
                         onClick={() => setDeletingCustomer(customer)}
                       >
                         Delete
@@ -385,7 +419,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-5">
+          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
             {selectedCustomer ? (
               <>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -394,13 +428,13 @@ export default function Dashboard() {
                     <p className="mt-1 text-sm text-slate-400">{selectedCustomer.phone || "No phone"}</p>
                     <div className="mt-3 flex gap-2">
                       <button
-                        className="rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
                         onClick={() => openEditCustomer(selectedCustomer)}
                       >
                         Edit
                       </button>
                       <button
-                        className="rounded-md border border-rose-900/70 px-3 py-2 text-xs font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
                         onClick={() => setDeletingCustomer(selectedCustomer)}
                       >
                         Delete
@@ -420,11 +454,11 @@ export default function Dashboard() {
                 </div>
 
                 <form
-                  className="mt-6 grid gap-3 rounded-lg border border-slate-800 p-4 md:grid-cols-[160px_1fr_1fr_auto]"
+                  className="mt-6 grid gap-3 rounded-lg border border-slate-800 p-3 sm:p-4 md:grid-cols-[160px_1fr_1fr_auto]"
                   onSubmit={createLedgerTransaction}
                 >
                   <select
-                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
                     value={ledgerForm.type}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
                   >
@@ -432,24 +466,24 @@ export default function Dashboard() {
                     <option value="CREDIT">ငွေချေ</option>
                   </select>
                   <input
-                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
                     inputMode="numeric"
                     placeholder="ငွေပမာဏ"
                     value={ledgerForm.amount}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, amount: event.target.value })}
                   />
                   <input
-                    className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
                     placeholder="မှတ်ချက်"
                     value={ledgerForm.note}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
                   />
-                  <button className="rounded-md bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+                  <button className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm">
                     Save
                   </button>
                 </form>
 
-                <div className="mt-6 overflow-hidden rounded-lg border border-slate-800">
+                <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
                   <table className="w-full min-w-[620px] border-collapse text-sm">
                     <thead className="bg-slate-900 text-left text-slate-300">
                       <tr>
@@ -501,22 +535,23 @@ export default function Dashboard() {
       </div>
 
       {editingCustomer ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
           <form
-            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-5 shadow-2xl"
+            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-4 shadow-2xl sm:p-5"
             onSubmit={updateCustomer}
           >
             <h2 className="text-lg font-semibold text-white">Customer ပြင်မည်</h2>
             <div className="mt-4 grid gap-3">
               <input
-                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
                 placeholder="အမည်"
                 value={editForm.name}
                 onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
                 required
               />
               <input
-                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                inputMode="tel"
                 placeholder="ဖုန်း"
                 value={editForm.phone}
                 onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
@@ -525,12 +560,12 @@ export default function Dashboard() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
                 onClick={() => setEditingCustomer(null)}
               >
                 Cancel
               </button>
-              <button className="rounded-md bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
                 Save
               </button>
             </div>
@@ -539,8 +574,8 @@ export default function Dashboard() {
       ) : null}
 
       {deletingCustomer ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
-          <div className="w-full max-w-md rounded-lg border border-rose-900/70 bg-slate-950 p-5 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
+          <div className="w-full max-w-md rounded-lg border border-rose-900/70 bg-slate-950 p-4 shadow-2xl sm:p-5">
             <h2 className="text-lg font-semibold text-white">Customer ဖျက်မည်</h2>
             <p className="mt-2 text-sm text-slate-300">
               {deletingCustomer.name} ကိုဖျက်ပါမည်။ Transaction history များလည်း ဖျက်သွားမည်။
@@ -548,13 +583,13 @@ export default function Dashboard() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
                 onClick={() => setDeletingCustomer(null)}
               >
                 Cancel
               </button>
               <button
-                className="rounded-md bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                className="min-h-12 rounded-md bg-rose-500 px-5 py-3 text-base font-semibold text-white hover:bg-rose-400"
                 onClick={deleteCustomer}
               >
                 Delete
@@ -565,9 +600,9 @@ export default function Dashboard() {
       ) : null}
 
       {matchingKpay ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
           <form
-            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-5 shadow-2xl"
+            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-4 shadow-2xl sm:p-5"
             onSubmit={matchKpay}
           >
             <h2 className="text-lg font-semibold text-white">KPay ကို Customer နှင့် တွဲမည်</h2>
@@ -575,7 +610,7 @@ export default function Dashboard() {
               {formatMoney(matchingKpay.amount)} ဝင်ငွေကို customer အကြွေးထဲမှ နှုတ်ပါမည်။
             </p>
             <select
-              className="mt-4 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
               value={matchCustomerId}
               onChange={(event) => setMatchCustomerId(event.target.value)}
               required
@@ -590,12 +625,12 @@ export default function Dashboard() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
                 onClick={() => setMatchingKpay(null)}
               >
                 Cancel
               </button>
-              <button className="rounded-md bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
                 Match
               </button>
             </div>
