@@ -49,3 +49,23 @@ export async function PATCH(request, { params }) {
     return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }
+
+export async function DELETE(_request, { params }) {
+  try {
+    await ensureDatabase();
+
+    const id = Number(params.id);
+
+    if (!id) {
+      return NextResponse.json({ error: "Customer id is required" }, { status: 400 });
+    }
+
+    const customer = await prisma.customer.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ data: customer });
+  } catch (error) {
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
+  }
+}

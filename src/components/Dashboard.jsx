@@ -46,6 +46,9 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [matchingKpay, setMatchingKpay] = useState(null);
   const [matchCustomerId, setMatchCustomerId] = useState("");
+  const [editingCustomer, setEditingCustomer] = useState(null);
+  const [deletingCustomer, setDeletingCustomer] = useState(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", current_balance: "" });
   const [ledgerForm, setLedgerForm] = useState({ type: "DEBIT", amount: "", note: "" });
   const [loading, setLoading] = useState(true);
@@ -144,6 +147,54 @@ export default function Dashboard() {
       setMatchCustomerId("");
       setSelectedCustomerId(customerId);
       await Promise.all([loadDashboard(), loadCustomer(customerId)]);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  function openEditCustomer(customer) {
+    setEditingCustomer(customer);
+    setEditForm({
+      name: customer.name || "",
+      phone: customer.phone || "",
+    });
+  }
+
+  async function updateCustomer(event) {
+    event.preventDefault();
+    if (!editingCustomer) return;
+
+    try {
+      setMessage("");
+      const customer = await api(`/api/customers/${editingCustomer.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(editForm),
+      });
+      setEditingCustomer(null);
+      setEditForm({ name: "", phone: "" });
+      await loadDashboard();
+      if (selectedCustomerId === customer.id) {
+        await loadCustomer(customer.id);
+      }
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function deleteCustomer() {
+    if (!deletingCustomer) return;
+
+    try {
+      setMessage("");
+      await api(`/api/customers/${deletingCustomer.id}`, {
+        method: "DELETE",
+      });
+      if (selectedCustomerId === deletingCustomer.id) {
+        setSelectedCustomerId(null);
+        setSelectedCustomer(null);
+      }
+      setDeletingCustomer(null);
+      await loadDashboard();
     } catch (error) {
       setMessage(error.message);
     }
@@ -285,30 +336,50 @@ export default function Dashboard() {
                 const active = selectedCustomerId === customer.id;
                 const hasDebt = customer.current_balance > 0;
                 return (
-                  <button
+                  <div
                     key={customer.id}
                     className={`rounded-lg border p-3 text-left transition ${
                       active
                         ? "border-cyan-400 bg-cyan-400/10"
                         : "border-slate-800 bg-slate-900/40 hover:border-slate-600"
                     }`}
-                    onClick={() => setSelectedCustomerId(customer.id)}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-white">{customer.name}</p>
-                        <p className="truncate text-xs text-slate-400">{customer.phone || "No phone"}</p>
+                    <button
+                      className="w-full text-left"
+                      onClick={() => setSelectedCustomerId(customer.id)}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-white">{customer.name}</p>
+                          <p className="truncate text-xs text-slate-400">
+                            {customer.phone || "No phone"}
+                          </p>
+                        </div>
+                        <span
+                          className={`h-9 w-1 rounded-full ${
+                            hasDebt ? "bg-rose-400" : "bg-emerald-400"
+                          }`}
+                        />
                       </div>
-                      <span
-                        className={`h-9 w-1 rounded-full ${
-                          hasDebt ? "bg-rose-400" : "bg-emerald-400"
-                        }`}
-                      />
+                      <p className={`mt-2 text-sm ${hasDebt ? "text-rose-200" : "text-emerald-200"}`}>
+                        {formatMoney(customer.current_balance)}
+                      </p>
+                    </button>
+                    <div className="mt-3 flex gap-2 border-t border-slate-800 pt-3">
+                      <button
+                        className="flex-1 rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        onClick={() => openEditCustomer(customer)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="flex-1 rounded-md border border-rose-900/70 px-3 py-2 text-xs font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        onClick={() => setDeletingCustomer(customer)}
+                      >
+                        Delete
+                      </button>
                     </div>
-                    <p className={`mt-2 text-sm ${hasDebt ? "text-rose-200" : "text-emerald-200"}`}>
-                      {formatMoney(customer.current_balance)}
-                    </p>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -321,6 +392,20 @@ export default function Dashboard() {
                   <div>
                     <h2 className="text-xl font-semibold text-white">{selectedCustomer.name}</h2>
                     <p className="mt-1 text-sm text-slate-400">{selectedCustomer.phone || "No phone"}</p>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        className="rounded-md border border-slate-700 px-3 py-2 text-xs font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        onClick={() => openEditCustomer(selectedCustomer)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="rounded-md border border-rose-900/70 px-3 py-2 text-xs font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        onClick={() => setDeletingCustomer(selectedCustomer)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                   <div className="rounded-lg border border-slate-800 px-4 py-3">
                     <p className="text-sm text-slate-400">လက်ရှိအကြွေးကျန်ငွေ</p>
@@ -414,6 +499,70 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+
+      {editingCustomer ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <form
+            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-5 shadow-2xl"
+            onSubmit={updateCustomer}
+          >
+            <h2 className="text-lg font-semibold text-white">Customer ပြင်မည်</h2>
+            <div className="mt-4 grid gap-3">
+              <input
+                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                placeholder="အမည်"
+                value={editForm.name}
+                onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
+                required
+              />
+              <input
+                className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-cyan-400"
+                placeholder="ဖုန်း"
+                value={editForm.phone}
+                onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
+              />
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+                onClick={() => setEditingCustomer(null)}
+              >
+                Cancel
+              </button>
+              <button className="rounded-md bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300">
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {deletingCustomer ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="w-full max-w-md rounded-lg border border-rose-900/70 bg-slate-950 p-5 shadow-2xl">
+            <h2 className="text-lg font-semibold text-white">Customer ဖျက်မည်</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              {deletingCustomer.name} ကိုဖျက်ပါမည်။ Transaction history များလည်း ဖျက်သွားမည်။
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-slate-500"
+                onClick={() => setDeletingCustomer(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-md bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-400"
+                onClick={deleteCustomer}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {matchingKpay ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
