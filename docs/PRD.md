@@ -191,7 +191,8 @@ MacroDroid version အလိုက် magic text variable names ကွာနိ�
 ## ၈။ Environment Variables
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
+DATABASE_URL="postgresql://postgres.qvanezzllbcrvmqexzoq:YOUR_DATABASE_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.qvanezzllbcrvmqexzoq:YOUR_DATABASE_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_CHAT_ID=""
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

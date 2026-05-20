@@ -40,13 +40,14 @@ npm run dev
 Required `.env` values:
 
 ```env
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
+DATABASE_URL="postgresql://postgres.qvanezzllbcrvmqexzoq:YOUR_DATABASE_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.qvanezzllbcrvmqexzoq:YOUR_DATABASE_PASSWORD@aws-1-ap-south-1.pooler.supabase.com:5432/postgres"
 TELEGRAM_BOT_TOKEN="your_bot_token"
 TELEGRAM_CHAT_ID="your_father_chat_id"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-For Vercel production, SQLite is not suitable because serverless functions do not provide a persistent writable local database file. Add a Postgres database URL to Vercel Project Settings as `DATABASE_URL`. The API creates the required tables automatically on first request.
+For Vercel production, SQLite is not suitable because serverless functions do not provide a persistent writable local database file. Add Supabase Postgres URLs to Vercel Project Settings as `DATABASE_URL` and `DIRECT_URL`. Replace `YOUR_DATABASE_PASSWORD` with the actual Supabase database password. The API creates the required tables automatically on first request.
 
 ## MacroDroid Configuration Guide
 

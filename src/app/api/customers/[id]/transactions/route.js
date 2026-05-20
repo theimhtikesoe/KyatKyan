@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 function balanceDelta(type, amount) {
   return type === "DEBIT" ? amount : -amount;
 }

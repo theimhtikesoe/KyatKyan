@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { buildKpayRawText, extractKpayAmount } from "@/lib/kpay";
 import { sendTelegramMessage } from "@/lib/telegram";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request) {
   try {
     await ensureDatabase();
