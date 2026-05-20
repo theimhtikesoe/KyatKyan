@@ -1,6 +1,8 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Headers for PWA support
+// PWA Configuration for Next.js
+// This configuration ensures service worker and manifest files are properly served
+
+module.exports = {
+  // Headers for service worker and manifest
   async headers() {
     return [
       {
@@ -28,5 +30,3 @@ const nextConfig = {
     ];
   },
 };
-
-export default nextConfig;

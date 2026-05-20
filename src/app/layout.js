@@ -3,12 +3,70 @@ import "./globals.css";
 export const metadata = {
   title: "LatYar Ledger & KPay Automation",
   description: "KPay webhook automation and customer ledger dashboard",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "KyatKyan",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  themeColor: "#00d4ff",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="my">
-      <body>{children}</body>
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="KyatKyan" />
+        <meta name="theme-color" content="#00d4ff" />
+        <meta name="msapplication-TileColor" content="#00d4ff" />
+        <meta name="msapplication-config" content="/browserconfig.xml" />
+      </head>
+      <body>
+        {children}
+        <ServiceWorkerRegister />
+      </body>
     </html>
+  );
+}
+
+function ServiceWorkerRegister() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+          if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('/service-worker.js').then(
+                (registration) => {
+                  console.log('Service Worker registered:', registration);
+                },
+                (error) => {
+                  console.log('Service Worker registration failed:', error);
+                }
+              );
+            });
+          }
+        `,
+      }}
+    />
   );
 }
