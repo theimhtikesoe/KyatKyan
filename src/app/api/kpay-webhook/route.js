@@ -1,48 +1,51 @@
-import { NextResponse } from "next/server";
-import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
-import { prisma } from "@/lib/prisma";
-import { buildKpayRawText, extractKpayAmount } from "@/lib/kpay";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client'; // သို့မဟုတ် မင်းသုံးထားတဲ့ DB client
 
-export const dynamic = "force-dynamic";
+const prisma = new PrismaClient();
+
+// မြန်မာဂဏန်းတွေကို အင်္ဂလိပ်ဂဏန်း ပြောင်းပေးမည့် Helper
+function mmToEnNumbers(str) {
+  const mmNums = { '၀':'0', '၁':'1', '၂':'2', '၃':'3', '၄':'4', '၅':'5', '၆':'6', '၇':'7', '၈':'8', '၉':'9' };
+  return str.replace(/[၀-၉]/g, m => mmNums[m]);
+}
 
 export async function POST(request) {
   try {
-    await ensureDatabase();
+    const data = await request.json();
+    const rawText = data.text || ""; // MacroDroid က ပို့မည့် စာသား
+    const rawTitle = data.title || "KBZPay Notification";
 
-    const body = await request.json();
-    const title = body.title || "";
-    const text = body.text || "";
-    const raw_text = buildKpayRawText(title, text);
-    const amount = extractKpayAmount(text || raw_text);
-
-    if (!raw_text) {
-      return NextResponse.json({ error: "title or text is required" }, { status: 400 });
+    if (!rawText) {
+      return NextResponse.json({ success: false, error: "No text provided" }, { status: 400 });
     }
 
-    if (!amount) {
-      return NextResponse.json({ error: "Could not extract amount from text" }, { status: 400 });
-    }
+    // ၁။ စာသားထဲက ကော်မာ (,) တွေကို ဖြုတ်၊ မြန်မာဂဏန်းတွေကို အင်္ဂလိပ်ပြောင်း
+    const cleanText = mmToEnNumbers(rawText).replace(/,/g, '');
+    
+    // ၂။ Regex သုံးပြီး ငွေပမာဏ ဂဏန်းသီးသန့်ကို ဖြတ်ထုတ်ခြင်း
+    const amountMatch = cleanText.match(/\d+/); 
+    const amount = amountMatch ? parseInt(amountMatch[0]) : 0;
 
-    const kpay = await prisma.unverifiedKpay.create({
+    // ၃။ Database ရဲ့ UnverifiedKpay Table ထဲကို လှမ်းသိမ်းမည်
+    const newKpayLog = await prisma.unverifiedKpay.create({
       data: {
-        raw_text,
-        amount,
-        status: "PENDING",
-      },
+        raw_text: rawText,
+        amount: amount,
+        status: "PENDING" // ဒီကောင်က မင်း UI က Unverified KPay Bucket ထဲ တန်းပေါ်လာစေမယ့် Status
+      }
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const message = `🚨 KPay ငွေဝင်ပြီ - ပမာဏ: ${amount.toLocaleString()} ကျပ်။ စစ်ဆေးရန်: ${appUrl}`;
+    // ၄။ (Optional) ဖေဖေ့ Telegram Bot ဆီကို စာလှမ်းပို့ချင်ရင် ဒီမှာ ချိတ်ပါ
+    // await sendTelegramNotification(amount, rawText);
 
-    try {
-      await sendTelegramMessage(message);
-    } catch (error) {
-      console.error(error);
-    }
+    return NextResponse.json({ 
+      success: true, 
+      message: "Data synced successfully", 
+      extracted_amount: amount 
+    });
 
-    return NextResponse.json({ ok: true, data: kpay });
   } catch (error) {
-    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
+    console.error("Webhook Error:", error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
