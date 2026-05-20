@@ -2,6 +2,8 @@
 
 Next.js App Router, Tailwind CSS, SQLite, and Prisma based ledger system for KPay notification intake.
 
+See the full product requirement and system report in [docs/PRD.md](docs/PRD.md).
+
 ## Folder Structure
 
 ```txt
