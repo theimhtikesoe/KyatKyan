@@ -1,27 +1,36 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const q = searchParams.get("q")?.trim();
+  try {
+    await ensureDatabase();
 
-  const customers = await prisma.customer.findMany({
-    where: q
-      ? {
-          OR: [
-            { name: { contains: q } },
-            { phone: { contains: q } },
-          ],
-        }
-      : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q")?.trim();
 
-  return NextResponse.json({ data: customers });
+    const customers = await prisma.customer.findMany({
+      where: q
+        ? {
+            OR: [
+              { name: { contains: q, mode: "insensitive" } },
+              { phone: { contains: q, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({ data: customers });
+  } catch (error) {
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
+  }
 }
 
 export async function POST(request) {
   try {
+    await ensureDatabase();
+
     const body = await request.json();
     const name = body.name?.trim();
 
@@ -39,7 +48,6 @@ export async function POST(request) {
 
     return NextResponse.json({ data: customer }, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Could not create customer" }, { status: 500 });
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }

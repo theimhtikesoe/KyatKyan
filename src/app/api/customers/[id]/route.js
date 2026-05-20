@@ -1,27 +1,36 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_request, { params }) {
-  const id = Number(params.id);
+  try {
+    await ensureDatabase();
 
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      transactions: {
-        orderBy: { date: "desc" },
+    const id = Number(params.id);
+
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        transactions: {
+          orderBy: { date: "desc" },
+        },
       },
-    },
-  });
+    });
 
-  if (!customer) {
-    return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    if (!customer) {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: customer });
+  } catch (error) {
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
-
-  return NextResponse.json({ data: customer });
 }
 
 export async function PATCH(request, { params }) {
   try {
+    await ensureDatabase();
+
     const id = Number(params.id);
     const body = await request.json();
 
@@ -35,7 +44,6 @@ export async function PATCH(request, { params }) {
 
     return NextResponse.json({ data: customer });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Could not update customer" }, { status: 500 });
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }

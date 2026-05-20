@@ -20,10 +20,19 @@ async function api(path, options) {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
-  const body = await response.json();
+  const text = await response.text();
+  let body = {};
+
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = { error: text };
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(body.error || "Request failed");
+    throw new Error(body.error || `Request failed with status ${response.status}`);
   }
 
   return body.data;
@@ -79,53 +88,65 @@ export default function Dashboard() {
 
   async function createCustomer(event) {
     event.preventDefault();
-    setMessage("");
-    const customer = await api("/api/customers", {
-      method: "POST",
-      body: JSON.stringify({
-        ...newCustomer,
-        current_balance: Number(newCustomer.current_balance || 0),
-      }),
-    });
-    setNewCustomer({ name: "", phone: "", current_balance: "" });
-    setSelectedCustomerId(customer.id);
-    await loadDashboard();
+    try {
+      setMessage("");
+      const customer = await api("/api/customers", {
+        method: "POST",
+        body: JSON.stringify({
+          ...newCustomer,
+          current_balance: Number(newCustomer.current_balance || 0),
+        }),
+      });
+      setNewCustomer({ name: "", phone: "", current_balance: "" });
+      setSelectedCustomerId(customer.id);
+      await loadDashboard();
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   async function createLedgerTransaction(event) {
     event.preventDefault();
     if (!selectedCustomerId) return;
 
-    setMessage("");
-    await api(`/api/customers/${selectedCustomerId}/transactions`, {
-      method: "POST",
-      body: JSON.stringify({
-        type: ledgerForm.type,
-        amount: Number(ledgerForm.amount),
-        note: ledgerForm.note,
-      }),
-    });
-    setLedgerForm({ type: "DEBIT", amount: "", note: "" });
-    await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId)]);
+    try {
+      setMessage("");
+      await api(`/api/customers/${selectedCustomerId}/transactions`, {
+        method: "POST",
+        body: JSON.stringify({
+          type: ledgerForm.type,
+          amount: Number(ledgerForm.amount),
+          note: ledgerForm.note,
+        }),
+      });
+      setLedgerForm({ type: "DEBIT", amount: "", note: "" });
+      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId)]);
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   async function matchKpay(event) {
     event.preventDefault();
     if (!matchingKpay || !matchCustomerId) return;
 
-    setMessage("");
-    await api("/api/kpay-match", {
-      method: "POST",
-      body: JSON.stringify({
-        unverifiedKpayId: matchingKpay.id,
-        customerId: Number(matchCustomerId),
-      }),
-    });
-    const customerId = Number(matchCustomerId);
-    setMatchingKpay(null);
-    setMatchCustomerId("");
-    setSelectedCustomerId(customerId);
-    await Promise.all([loadDashboard(), loadCustomer(customerId)]);
+    try {
+      setMessage("");
+      await api("/api/kpay-match", {
+        method: "POST",
+        body: JSON.stringify({
+          unverifiedKpayId: matchingKpay.id,
+          customerId: Number(matchCustomerId),
+        }),
+      });
+      const customerId = Number(matchCustomerId);
+      setMatchingKpay(null);
+      setMatchCustomerId("");
+      setSelectedCustomerId(customerId);
+      await Promise.all([loadDashboard(), loadCustomer(customerId)]);
+    } catch (error) {
+      setMessage(error.message);
+    }
   }
 
   return (

@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status") || "PENDING";
+  try {
+    await ensureDatabase();
 
-  const items = await prisma.unverifiedKpay.findMany({
-    where: { status },
-    orderBy: { createdAt: "desc" },
-  });
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status") || "PENDING";
 
-  return NextResponse.json({ data: items });
+    const items = await prisma.unverifiedKpay.findMany({
+      where: { status },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({ data: items });
+  } catch (error) {
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
+  }
 }

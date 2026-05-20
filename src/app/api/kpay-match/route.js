@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request) {
   try {
+    await ensureDatabase();
+
     const body = await request.json();
     const unverifiedKpayId = Number(body.unverifiedKpayId);
     const customerId = Number(body.customerId);
@@ -52,7 +55,6 @@ export async function POST(request) {
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: error.message || "Could not match KPay" }, { status: 500 });
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }

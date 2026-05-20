@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 
 function balanceDelta(type, amount) {
@@ -7,6 +8,8 @@ function balanceDelta(type, amount) {
 
 export async function POST(request, { params }) {
   try {
+    await ensureDatabase();
+
     const customer_id = Number(params.id);
     const body = await request.json();
     const type = body.type === "CREDIT" ? "CREDIT" : "DEBIT";
@@ -41,7 +44,6 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({ data: result }, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Could not create transaction" }, { status: 500 });
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }

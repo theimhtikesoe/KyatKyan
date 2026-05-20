@@ -1,6 +1,6 @@
 # LatYar Ledger & KPay Automation
 
-Next.js App Router, Tailwind CSS, SQLite, and Prisma based ledger system for KPay notification intake.
+Next.js App Router, Tailwind CSS, Postgres, and Prisma based ledger system for KPay notification intake.
 
 See the full product requirement and system report in [docs/PRD.md](docs/PRD.md).
 
@@ -27,33 +27,26 @@ src/app/page.js                      Dashboard page
 - Database-style relation fields follow the requested names: `customer_id`, `current_balance`, `raw_text`.
 - API request JSON uses camelCase for action fields such as `unverifiedKpayId` and `customerId`.
 - Ledger meaning: `DEBIT` increases customer debt, `CREDIT` decreases customer debt.
-- SQLite in Prisma does not support native enums, so `type` and `status` are stored as strings while the API enforces `DEBIT/CREDIT` and `PENDING/MATCHED`.
+- `type` and `status` are stored as strings while the API enforces `DEBIT/CREDIT` and `PENDING/MATCHED`.
 
 ## Setup
 
 ```bash
 cp .env.example .env
 npm install
-npm run prisma:migrate -- --name init
-npm run dev
-```
-
-If Prisma's SQLite schema engine fails on your local machine, use the included SQL migration directly:
-
-```bash
-sqlite3 prisma/dev.db ".read prisma/migrations/20260520180000_init/migration.sql"
-npm run prisma:generate
 npm run dev
 ```
 
 Required `.env` values:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
 TELEGRAM_BOT_TOKEN="your_bot_token"
 TELEGRAM_CHAT_ID="your_father_chat_id"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
+
+For Vercel production, SQLite is not suitable because serverless functions do not provide a persistent writable local database file. Add a Postgres database URL to Vercel Project Settings as `DATABASE_URL`. The API creates the required tables automatically on first request.
 
 ## MacroDroid Configuration Guide
 

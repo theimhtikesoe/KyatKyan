@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
+import { databaseErrorResponse, ensureDatabase } from "@/lib/database";
 import { prisma } from "@/lib/prisma";
 import { buildKpayRawText, extractKpayAmount } from "@/lib/kpay";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export async function POST(request) {
   try {
+    await ensureDatabase();
+
     const body = await request.json();
     const title = body.title || "";
     const text = body.text || "";
@@ -38,7 +41,6 @@ export async function POST(request) {
 
     return NextResponse.json({ ok: true, data: kpay });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Webhook failed" }, { status: 500 });
+    return NextResponse.json(databaseErrorResponse(error), { status: 500 });
   }
 }
