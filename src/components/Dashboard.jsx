@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", current_balance: "" });
   const [ledgerForm, setLedgerForm] = useState({ type: "DEBIT", amount: "", note: "" });
+  const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -102,6 +103,7 @@ export default function Dashboard() {
       });
       setNewCustomer({ name: "", phone: "", current_balance: "" });
       setSelectedCustomerId(customer.id);
+      setShowAddCustomer(false);
       await loadDashboard();
     } catch (error) {
       setMessage(error.message);
@@ -237,36 +239,50 @@ export default function Dashboard() {
           ) : null}
         </header>
 
-        <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4 lg:hidden">
-          <h2 className="text-base font-semibold text-white">Customer အသစ်ထည့်ရန်</h2>
-          <form className="mt-3 grid gap-3" onSubmit={createCustomer}>
-            <input
-              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
-              placeholder="အမည်"
-              value={newCustomer.name}
-              onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
-              required
-            />
-            <input
-              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
-              inputMode="tel"
-              placeholder="ဖုန်းနံပါတ်"
-              value={newCustomer.phone}
-              onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
-            />
-            <input
-              className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
-              inputMode="numeric"
-              placeholder="အစ လက်ကျန်အကြွေး"
-              value={newCustomer.current_balance}
-              onChange={(event) =>
-                setNewCustomer({ ...newCustomer, current_balance: event.target.value })
-              }
-            />
-            <button className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
-              Add Customer
-            </button>
-          </form>
+        <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4">
+          <button
+            className="flex min-h-12 w-full items-center justify-between gap-3 text-left"
+            onClick={() => setShowAddCustomer((value) => !value)}
+          >
+            <div>
+              <h2 className="text-base font-semibold text-white">Customer အသစ်ထည့်ရန်</h2>
+              <p className="mt-1 text-sm text-slate-400">ဖုန်းမှ အမြန်စာရင်းသွင်းရန်</p>
+            </div>
+            <span className="rounded-md border border-slate-700 px-3 py-2 text-sm text-cyan-200">
+              {showAddCustomer ? "Hide" : "Add"}
+            </span>
+          </button>
+
+          {showAddCustomer ? (
+            <form className="mt-3 grid gap-3 sm:grid-cols-[1fr_180px_180px_auto]" onSubmit={createCustomer}>
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                placeholder="အမည်"
+                value={newCustomer.name}
+                onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
+                required
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                inputMode="tel"
+                placeholder="ဖုန်းနံပါတ်"
+                value={newCustomer.phone}
+                onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                inputMode="numeric"
+                placeholder="အစ လက်ကျန်အကြွေး"
+                value={newCustomer.current_balance}
+                onChange={(event) =>
+                  setNewCustomer({ ...newCustomer, current_balance: event.target.value })
+                }
+              />
+              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
+                Add
+              </button>
+            </form>
+          ) : null}
         </section>
 
         <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
@@ -325,9 +341,20 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(280px,380px)_1fr]">
+        <section className="grid gap-6">
           <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-            <h2 className="text-lg font-semibold text-white">Customer List</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Customer List</h2>
+                <p className="text-sm text-slate-400">အကြွေးကျန်သူများကို ဘယ်ဘက်အနီလိုင်းဖြင့်ပြထားသည်</p>
+              </div>
+              <button
+                className="min-h-11 rounded-md border border-cyan-500/40 px-4 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/10"
+                onClick={() => setShowAddCustomer(true)}
+              >
+                Add Customer
+              </button>
+            </div>
             <input
               className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
               placeholder="အမည် သို့မဟုတ် ဖုန်းနံပါတ် ရှာရန်"
@@ -335,80 +362,54 @@ export default function Dashboard() {
               onChange={(event) => setSearch(event.target.value)}
             />
 
-            <form className="mt-4 hidden gap-3 rounded-lg border border-slate-800 p-3 sm:grid" onSubmit={createCustomer}>
-              <p className="text-sm font-medium text-slate-200">Customer အသစ်ထည့်ရန်</p>
-              <input
-                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
-                placeholder="အမည်"
-                value={newCustomer.name}
-                onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
-                required
-              />
-              <input
-                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
-                inputMode="tel"
-                placeholder="ဖုန်း"
-                value={newCustomer.phone}
-                onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
-              />
-              <input
-                className="min-h-11 rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-base outline-none focus:border-cyan-400"
-                inputMode="numeric"
-                placeholder="အစ လက်ကျန်အကြွေး"
-                value={newCustomer.current_balance}
-                onChange={(event) =>
-                  setNewCustomer({ ...newCustomer, current_balance: event.target.value })
-                }
-              />
-              <button className="min-h-11 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-white">
-                Add Customer
-              </button>
-            </form>
-
-            <div className="mt-4 flex max-h-[58vh] flex-col gap-3 overflow-auto pr-1 sm:max-h-[520px] sm:gap-2">
+            <div className="mt-4 grid max-h-[58vh] grid-cols-1 gap-3 overflow-auto pr-1 sm:max-h-[520px] sm:grid-cols-2 md:grid-cols-3">
               {customers.map((customer) => {
                 const active = selectedCustomerId === customer.id;
                 const hasDebt = customer.current_balance > 0;
                 return (
                   <div
                     key={customer.id}
-                    className={`rounded-lg border p-3 text-left transition ${
+                    className={`group rounded-lg border border-l-4 p-3 text-left transition ${
                       active
                         ? "border-cyan-400 bg-cyan-400/10"
                         : "border-slate-800 bg-slate-900/40 hover:border-slate-600"
-                    }`}
+                    } ${hasDebt ? "border-l-rose-500" : "border-l-emerald-500"}`}
                   >
                     <button
-                      className="min-h-16 w-full text-left"
+                      className="w-full text-left"
                       onClick={() => setSelectedCustomerId(customer.id)}
                     >
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-h-14 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-white">{customer.name}</p>
-                          <p className="truncate text-xs text-slate-400">
+                          <p className="truncate text-sm font-semibold text-white">{customer.name}</p>
+                          <p className="mt-1 truncate text-xs text-slate-400">
                             {customer.phone || "No phone"}
                           </p>
                         </div>
-                        <span
-                          className={`h-9 w-1 rounded-full ${
-                            hasDebt ? "bg-rose-400" : "bg-emerald-400"
-                          }`}
-                        />
+                        <div className="shrink-0 text-right">
+                          <p
+                            className={`text-sm font-semibold ${
+                              hasDebt ? "text-rose-200" : "text-emerald-200"
+                            }`}
+                          >
+                            {formatMoney(customer.current_balance)}
+                          </p>
+                          <p className="mt-1 text-[11px] text-slate-500">Balance</p>
+                        </div>
                       </div>
-                      <p className={`mt-2 text-base font-semibold sm:text-sm ${hasDebt ? "text-rose-200" : "text-emerald-200"}`}>
-                        {formatMoney(customer.current_balance)}
-                      </p>
                     </button>
-                    <div className="mt-3 flex gap-2 border-t border-slate-800 pt-3">
+                    <div className="mt-2 flex justify-end gap-1 border-t border-slate-800 pt-2 opacity-100 transition sm:opacity-60 sm:group-hover:opacity-100">
                       <button
-                        className="min-h-11 flex-1 rounded-md border border-slate-700 px-3 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        className="rounded-md px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-cyan-200"
                         onClick={() => openEditCustomer(customer)}
+                        aria-label={`Edit ${customer.name}`}
                       >
                         Edit
                       </button>
                       <button
-                        className="min-h-11 flex-1 rounded-md border border-rose-900/70 px-3 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        className="rounded-md px-2 py-1 text-xs font-medium text-rose-300 hover:bg-rose-950/60 hover:text-rose-100"
                         onClick={() => setDeletingCustomer(customer)}
+                        aria-label={`Delete ${customer.name}`}
                       >
                         Delete
                       </button>
