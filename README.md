@@ -1,0 +1,117 @@
+# LatYar Ledger & KPay Automation
+
+Next.js App Router, Tailwind CSS, SQLite, and Prisma based ledger system for KPay notification intake.
+
+## Folder Structure
+
+```txt
+prisma/schema.prisma                 Database schema
+src/lib/prisma.js                    Shared Prisma client
+src/lib/kpay.js                      KPay text amount parser
+src/lib/telegram.js                  Telegram sendMessage helper
+src/app/api/kpay-webhook/route.js    MacroDroid webhook endpoint
+src/app/api/unverified-kpay/route.js Pending KPay list endpoint
+src/app/api/customers/route.js       Customer GET/POST
+src/app/api/customers/[id]/route.js  Customer detail/update
+src/app/api/customers/[id]/transactions/route.js Manual debit/credit
+src/app/api/kpay-match/route.js      Match pending KPay with customer
+src/components/Dashboard.jsx         Single-page dashboard UI
+src/app/page.js                      Dashboard page
+```
+
+## Naming Conventions
+
+- Prisma models use PascalCase: `Customer`, `LedgerTransaction`, `UnverifiedKpay`.
+- Database-style relation fields follow the requested names: `customer_id`, `current_balance`, `raw_text`.
+- API request JSON uses camelCase for action fields such as `unverifiedKpayId` and `customerId`.
+- Ledger meaning: `DEBIT` increases customer debt, `CREDIT` decreases customer debt.
+- SQLite in Prisma does not support native enums, so `type` and `status` are stored as strings while the API enforces `DEBIT/CREDIT` and `PENDING/MATCHED`.
+
+## Setup
+
+```bash
+cp .env.example .env
+npm install
+npm run prisma:migrate -- --name init
+npm run dev
+```
+
+If Prisma's SQLite schema engine fails on your local machine, use the included SQL migration directly:
+
+```bash
+sqlite3 prisma/dev.db ".read prisma/migrations/20260520180000_init/migration.sql"
+npm run prisma:generate
+npm run dev
+```
+
+Required `.env` values:
+
+```env
+DATABASE_URL="file:./dev.db"
+TELEGRAM_BOT_TOKEN="your_bot_token"
+TELEGRAM_CHAT_ID="your_father_chat_id"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+## MacroDroid Configuration Guide
+
+1. Create a new Macro.
+2. Trigger: `Notification Received`.
+3. Choose the KPay app notification source.
+4. Action: `HTTP Request`.
+5. Method: `POST`.
+6. URL: `https://your-domain.com/api/kpay-webhook` or local tunnel URL during testing.
+7. Content Type: `application/json`.
+8. Body:
+
+```json
+{
+  "title": "[notification_title]",
+  "text": "[notification_text]"
+}
+```
+
+MacroDroid variable names can differ by version. If your app shows magic text chips, insert the notification title chip for `title` and notification text/body chip for `text`. Example final body:
+
+```json
+{
+  "title": "{not_title}",
+  "text": "{not_text}"
+}
+```
+
+The webhook can parse Myanmar or English digits, for example `၁၅,၀၀၀ ကျပ် ဝင်ပါသည်` and `15,000 Ks received`.
+
+## API Examples
+
+Create customer:
+
+```bash
+curl -X POST http://localhost:3000/api/customers \
+  -H "Content-Type: application/json" \
+  -d '{"name":"U Aung","phone":"09123456789","current_balance":50000}'
+```
+
+Manual ledger transaction:
+
+```bash
+curl -X POST http://localhost:3000/api/customers/1/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"type":"DEBIT","amount":15000,"note":"Today sale"}'
+```
+
+Test KPay webhook:
+
+```bash
+curl -X POST http://localhost:3000/api/kpay-webhook \
+  -H "Content-Type: application/json" \
+  -d '{"title":"KPay","text":"၁၅,၀၀၀ ကျပ် ဝင်ပါသည်"}'
+```
+
+Match pending KPay:
+
+```bash
+curl -X POST http://localhost:3000/api/kpay-match \
+  -H "Content-Type: application/json" \
+  -d '{"unverifiedKpayId":1,"customerId":1}'
+```

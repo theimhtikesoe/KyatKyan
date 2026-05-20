@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id              Int                 @id @default(autoincrement())
+  name            String
+  phone           String?
+  current_balance Int                 @default(0)
+  createdAt       DateTime            @default(now())
+  transactions    LedgerTransaction[]
+}
+
+model LedgerTransaction {
+  id          Int             @id @default(autoincrement())
+  customer_id Int
+  customer    Customer        @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  date        DateTime        @default(now())
+  type        String
+  amount      Int
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  @@index([customer_id])
+}
+
+model UnverifiedKpay {
+  id        Int        @id @default(autoincrement())
+  raw_text  String
+  amount    Int
+  status    String   @default("PENDING")
+  createdAt DateTime   @default(now())
+}
