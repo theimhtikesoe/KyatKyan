@@ -254,7 +254,7 @@ export default function Dashboard() {
           </button>
 
           {showAddCustomer ? (
-            <form className="mt-3 grid gap-3 sm:grid-cols-[1fr_180px_180px_auto]" onSubmit={createCustomer}>
+            <form className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4" onSubmit={createCustomer}>
               <input
                 className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
                 placeholder="အမည်"
@@ -343,17 +343,11 @@ export default function Dashboard() {
 
         <section className="grid gap-6">
           <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Customer List</h2>
-                <p className="text-sm text-slate-400">အကြွေးကျန်သူများကို ဘယ်ဘက်အနီလိုင်းဖြင့်ပြထားသည်</p>
-              </div>
-              <button
-                className="min-h-11 rounded-md border border-cyan-500/40 px-4 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/10"
-                onClick={() => setShowAddCustomer(true)}
-              >
-                Add Customer
-              </button>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Customer List</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                အကြွေးကျန်ရှိသူများကို ဘယ်ဘက်အနီလိုင်းဖြင့်ပြသထားသည်
+              </p>
             </div>
             <input
               className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
