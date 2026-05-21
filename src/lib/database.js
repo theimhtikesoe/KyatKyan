@@ -2,6 +2,33 @@ import { prisma } from "@/lib/prisma";
 
 let setupPromise;
 
+function isBenignSetupRace(error) {
+  const code = error?.code || error?.meta?.code;
+  const message = `${error?.message || ""} ${error?.meta?.message || ""}`;
+
+  return (
+    code === "23505" ||
+    code === "42P07" ||
+    code === "42701" ||
+    code === "42710" ||
+    message.includes("already exists") ||
+    message.includes("duplicate key value violates unique constraint")
+  );
+}
+
+async function setupQuery(sql) {
+  try {
+    return await prisma.$executeRawUnsafe(sql);
+  } catch (error) {
+    if (isBenignSetupRace(error)) {
+      console.warn("Ignoring concurrent database setup race:", error.message);
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 export function requireDatabaseUrl() {
   if (!process.env.DATABASE_URL) {
     throw new Error(
@@ -15,7 +42,7 @@ export async function ensureDatabase() {
 
   if (!setupPromise) {
     setupPromise = (async () => {
-      await prisma.$executeRawUnsafe(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
+      await setupQuery(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
       const legacyCustomerId = await prisma.$queryRaw`
         SELECT 1
@@ -27,14 +54,14 @@ export async function ensureDatabase() {
       `;
 
       if (legacyCustomerId.length) {
-        await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "LedgerTransaction" CASCADE`);
-        await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "Ledger" CASCADE`);
-        await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "KpayAlias" CASCADE`);
-        await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "UnverifiedKpay" CASCADE`);
-        await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "Customer" CASCADE`);
+        await setupQuery(`DROP TABLE IF EXISTS "LedgerTransaction" CASCADE`);
+        await setupQuery(`DROP TABLE IF EXISTS "Ledger" CASCADE`);
+        await setupQuery(`DROP TABLE IF EXISTS "KpayAlias" CASCADE`);
+        await setupQuery(`DROP TABLE IF EXISTS "UnverifiedKpay" CASCADE`);
+        await setupQuery(`DROP TABLE IF EXISTS "Customer" CASCADE`);
       }
 
-      await prisma.$executeRawUnsafe(`
+      await setupQuery(`
         CREATE TABLE IF NOT EXISTS "Customer" (
           "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           "name" TEXT NOT NULL,
@@ -44,7 +71,7 @@ export async function ensureDatabase() {
           "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
       `);
-      await prisma.$executeRawUnsafe(`
+      await setupQuery(`
         CREATE TABLE IF NOT EXISTS "KpayAlias" (
           "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           "kpayName" TEXT NOT NULL UNIQUE,
@@ -54,7 +81,7 @@ export async function ensureDatabase() {
             ON DELETE CASCADE ON UPDATE CASCADE
         )
       `);
-      await prisma.$executeRawUnsafe(`
+      await setupQuery(`
         CREATE TABLE IF NOT EXISTS "Ledger" (
           "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           "customerId" UUID NOT NULL,
@@ -73,7 +100,7 @@ export async function ensureDatabase() {
             ON DELETE CASCADE ON UPDATE CASCADE
         )
       `);
-      await prisma.$executeRawUnsafe(`
+      await setupQuery(`
         CREATE TABLE IF NOT EXISTS "UnverifiedKpay" (
           "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           "raw_text" TEXT NOT NULL,
@@ -88,19 +115,19 @@ export async function ensureDatabase() {
         )
       `);
 
-      await prisma.$executeRawUnsafe(`ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "routeTag" TEXT`);
-      await prisma.$executeRawUnsafe(
+      await setupQuery(`ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "routeTag" TEXT`);
+      await setupQuery(
         `ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "current_balance" INTEGER NOT NULL DEFAULT 0`,
       );
-      await prisma.$executeRawUnsafe(`ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "kpayName" TEXT`);
-      await prisma.$executeRawUnsafe(
+      await setupQuery(`ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "kpayName" TEXT`);
+      await setupQuery(
         `ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "suggestedCustomerId" UUID`,
       );
 
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Ledger_customerId_idx" ON "Ledger"("customerId")`);
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Ledger_date_idx" ON "Ledger"("date")`);
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_status_idx" ON "UnverifiedKpay"("status")`);
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_kpayName_idx" ON "UnverifiedKpay"("kpayName")`);
+      await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_customerId_idx" ON "Ledger"("customerId")`);
+      await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_date_idx" ON "Ledger"("date")`);
+      await setupQuery(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_status_idx" ON "UnverifiedKpay"("status")`);
+      await setupQuery(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_kpayName_idx" ON "UnverifiedKpay"("kpayName")`);
     })();
   }
 
