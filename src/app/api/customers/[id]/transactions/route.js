@@ -30,6 +30,14 @@ export async function POST(request, { params }) {
             increment: balanceDelta(type, amount),
           },
         },
+        select: {
+          id: true,
+          name: true,
+          phone: true,
+          routeTag: true,
+          current_balance: true,
+          createdAt: true,
+        },
       });
 
       const ledger = await tx.ledger.create({
@@ -44,6 +52,18 @@ export async function POST(request, { params }) {
           amount,
           note: body.note?.trim() || null,
           date: body.date ? new Date(body.date) : new Date(),
+        },
+        select: {
+          id: true,
+          date: true,
+          type: true,
+          saleType: true,
+          itemSize: true,
+          cartons: true,
+          rate: true,
+          deductions: true,
+          amount: true,
+          note: true,
         },
       });
 

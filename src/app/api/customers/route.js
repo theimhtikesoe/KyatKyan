@@ -11,6 +11,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim();
 
+    // Optimized: Select only necessary fields to reduce data transfer
     const customers = await prisma.customer.findMany({
       where: q
         ? {
@@ -21,6 +22,14 @@ export async function GET(request) {
             ],
           }
         : undefined,
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        routeTag: true,
+        current_balance: true,
+        createdAt: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -47,6 +56,14 @@ export async function POST(request) {
         phone: body.phone?.trim() || null,
         routeTag: body.routeTag?.trim() || null,
         current_balance: Number(body.current_balance || 0),
+      },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        routeTag: true,
+        current_balance: true,
+        createdAt: true,
       },
     });
 

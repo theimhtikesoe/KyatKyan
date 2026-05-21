@@ -171,10 +171,12 @@ export default function Dashboard() {
           current_balance: Number(newCustomer.current_balance || 0),
         }),
       });
+      
+      // Optimistic Update: Add new customer to the list immediately
+      setCustomers(prev => [customer, ...prev]);
       setNewCustomer({ name: "", phone: "", routeTag: "", current_balance: "" });
       setSelectedCustomerId(customer.id);
       setShowAddCustomer(false);
-      await loadDashboard();
       showAlert(`Customer "${customer.name}" အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
@@ -191,7 +193,25 @@ export default function Dashboard() {
     setIsSubmitting(true);
     try {
       setMessage("");
-      await api(`/api/customers/${selectedCustomerId}/transactions`, {
+      const amount = Number(ledgerForm.amount);
+      const type = ledgerForm.type;
+      
+      // Calculate new balance optimistically
+      const balanceDelta = type === "CREDIT" ? amount : -amount;
+      const newBalance = (selectedCustomer?.current_balance || 0) + balanceDelta;
+      
+      // Optimistic Update: Update balance immediately
+      setSelectedCustomer(prev => ({
+        ...prev,
+        current_balance: newBalance,
+      }));
+      
+      // Update customer in list
+      setCustomers(prev =>
+        prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
+      );
+      
+      const result = await api(`/api/customers/${selectedCustomerId}/transactions`, {
         method: "POST",
         body: JSON.stringify({
           type: ledgerForm.type,
@@ -204,6 +224,15 @@ export default function Dashboard() {
           note: ledgerForm.note,
         }),
       });
+      
+      // Add new transaction to the list optimistically
+      if (result && result.ledger) {
+        setSelectedCustomer(prev => ({
+          ...prev,
+          ledgers: [result.ledger, ...(prev.ledgers || [])],
+        }));
+      }
+      
       // Clear form immediately after successful submission
       setLedgerForm({
         type: "CREDIT",
@@ -215,13 +244,13 @@ export default function Dashboard() {
         amount: "",
         note: "",
       });
-      // Optimized: Only reload the selected customer data (includes latest ledgers)
-      // This is more efficient than reloading the entire dashboard
-      await loadCustomer(selectedCustomerId);
+      
       showAlert("Transaction အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+      // Revert optimistic update on error
+      await loadCustomer(selectedCustomerId);
     } finally {
       setIsSubmitting(false);
     }
@@ -241,7 +270,20 @@ export default function Dashboard() {
     setIsSubmitting(true);
     try {
       setMessage("");
-      await api(`/api/customers/${selectedCustomerId}/transactions`, {
+      
+      // Optimistic Update: Calculate and update balance immediately
+      const newBalance = (selectedCustomer?.current_balance || 0) + amount;
+      setSelectedCustomer(prev => ({
+        ...prev,
+        current_balance: newBalance,
+      }));
+      
+      // Update customer in list
+      setCustomers(prev =>
+        prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
+      );
+      
+      const result = await api(`/api/customers/${selectedCustomerId}/transactions`, {
         method: "POST",
         body: JSON.stringify({
           ...ledgerForm,
@@ -252,6 +294,15 @@ export default function Dashboard() {
           deductions: Number(ledgerForm.deductions || 0),
         }),
       });
+      
+      // Add new transaction to the list
+      if (result && result.ledger) {
+        setSelectedCustomer(prev => ({
+          ...prev,
+          ledgers: [result.ledger, ...(prev.ledgers || [])],
+        }));
+      }
+      
       setLedgerForm({
         type: "CREDIT",
         saleType: "RETAIL",
@@ -262,12 +313,13 @@ export default function Dashboard() {
         amount: "",
         note: "",
       });
-      // Optimized: Only reload the selected customer data (includes latest ledgers)
-      await loadCustomer(selectedCustomerId);
+      
       showAlert("Sales လက်ခြင်းအောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+      // Revert optimistic update on error
+      await loadCustomer(selectedCustomerId);
     } finally {
       setIsSubmitting(false);
     }
@@ -289,17 +341,32 @@ export default function Dashboard() {
           amount: matchingKpay.amount,
         }),
       });
+      
       const customerId = matchCustomerId;
       const kpayAmount = matchingKpay.amount;
+      
+      // Optimistic Update: Remove matched KPay from pending list
+      setPendingKpay(prev => prev.filter(k => k.id !== matchingKpay.id));
+      
+      // Update customer balance optimistically
+      setCustomers(prev =>
+        prev.map(c => 
+          c.id === customerId 
+            ? { ...c, current_balance: c.current_balance - kpayAmount } 
+            : c
+        )
+      );
+      
       setMatchingKpay(null);
       setMatchCustomerId("");
       setSelectedCustomerId(customerId);
-      // Optimized: Only reload the matched customer and pending KPay list
-      await Promise.all([loadDashboard(), loadCustomer(customerId)]);
+      
       showAlert(`KPay ${formatMoney(kpayAmount)} အောင်မြင်စွာ တွဲဆက်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+      // Reload data on error
+      await Promise.all([loadDashboard(), loadCustomer(matchCustomerId)]);
     } finally {
       setIsSubmitting(false);
     }
@@ -321,20 +388,34 @@ export default function Dashboard() {
     setIsSubmitting(true);
     try {
       setMessage("");
+      
+      // Optimistic Update: Update customer in list immediately
+      setCustomers(prev =>
+        prev.map(c =>
+          c.id === editingCustomer.id
+            ? { ...c, ...editForm }
+            : c
+        )
+      );
+      
       const customer = await api(`/api/customers/${editingCustomer.id}`, {
         method: "PATCH",
         body: JSON.stringify(editForm),
       });
+      
       setEditingCustomer(null);
       setEditForm({ name: "", phone: "", routeTag: "" });
-      await loadDashboard();
+      
       if (selectedCustomerId === customer.id) {
-        await loadCustomer(customer.id);
+        setSelectedCustomer(prev => ({ ...prev, ...customer }));
       }
+      
       showAlert(`Customer "${customer.name}" အောင်မြင်စွာ အဆင့်မြှင့်တင်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+      // Revert optimistic update on error
+      await loadDashboard();
     } finally {
       setIsSubmitting(false);
     }
@@ -347,19 +428,26 @@ export default function Dashboard() {
     try {
       setMessage("");
       const customerName = deletingCustomer.name;
+      
+      // Optimistic Update: Remove customer from list immediately
+      setCustomers(prev => prev.filter(c => c.id !== deletingCustomer.id));
+      
       await api(`/api/customers/${deletingCustomer.id}`, {
         method: "DELETE",
       });
+      
       if (selectedCustomerId === deletingCustomer.id) {
         setSelectedCustomerId(null);
         setSelectedCustomer(null);
       }
+      
       setDeletingCustomer(null);
-      await loadDashboard();
       showAlert(`Customer "${customerName}" အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+      // Revert optimistic update on error
+      await loadDashboard();
     } finally {
       setIsSubmitting(false);
     }
@@ -447,7 +535,7 @@ export default function Dashboard() {
           </button>
 
           {showAddCustomer ? (
-            <form className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4" onSubmit={createCustomer}>
+            <form className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4" onSubmit={createCustomer}>
               <input
                 className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
                 placeholder="အမည်"
@@ -852,158 +940,169 @@ export default function Dashboard() {
 
           {activeTab === "reports" ? (
             <div className="mt-4">
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
-                type="date"
-                value={reportDate}
-                onChange={(event) => setReportDate(event.target.value)}
-              />
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-md border border-slate-800 p-4">
-                  <p className="text-sm text-slate-400">လက်လီ</p>
-                  <p className="mt-1 text-xl font-semibold text-white">{formatMoney(report?.totals?.retail || 0)}</p>
-                </div>
-                <div className="rounded-md border border-slate-800 p-4">
-                  <p className="text-sm text-slate-400">လက်ကား</p>
-                  <p className="mt-1 text-xl font-semibold text-white">{formatMoney(report?.totals?.wholesale || 0)}</p>
-                </div>
-                <div className="rounded-md border border-slate-800 p-4">
-                  <p className="text-sm text-slate-400">ကုန်ကျစရိတ်</p>
-                  <p className="mt-1 text-xl font-semibold text-rose-200">{formatMoney(report?.totals?.deductions || 0)}</p>
-                </div>
-                <div className="rounded-md border border-cyan-500/30 p-4">
-                  <p className="text-sm text-slate-400">အသားတင်</p>
-                  <p className="mt-1 text-xl font-semibold text-cyan-200">{formatMoney(report?.totals?.netSales || 0)}</p>
+              <div className="mb-4 flex items-end gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300">Report Date</label>
+                  <input
+                    type="date"
+                    className="mt-1 min-h-11 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-cyan-400"
+                    value={reportDate}
+                    onChange={(e) => setReportDate(e.target.value)}
+                  />
                 </div>
               </div>
+
+              {report ? (
+                <div className="rounded-lg border border-slate-800 p-4">
+                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                    <div className="rounded-md border border-slate-700 p-3">
+                      <p className="text-xs text-slate-400">Total Credit</p>
+                      <p className="mt-1 text-lg font-semibold text-emerald-200">
+                        {formatMoney(report.totalCredit || 0)}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-slate-700 p-3">
+                      <p className="text-xs text-slate-400">Total Debit</p>
+                      <p className="mt-1 text-lg font-semibold text-rose-200">
+                        {formatMoney(report.totalDebit || 0)}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-slate-700 p-3">
+                      <p className="text-xs text-slate-400">Net Balance</p>
+                      <p className="mt-1 text-lg font-semibold text-cyan-200">
+                        {formatMoney((report.totalCredit || 0) - (report.totalDebit || 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
+                  Loading report...
+                </p>
+              )}
             </div>
           ) : null}
         </section>
-      </div>
 
-      {editingCustomer ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
-          <form
-            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-4 shadow-2xl sm:p-5"
-            onSubmit={updateCustomer}
-          >
-            <h2 className="text-lg font-semibold text-white">Customer ပြင်မည်</h2>
-            <div className="mt-4 grid gap-3">
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="အမည်"
-                value={editForm.name}
-                onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
-                required
-                disabled={isSubmitting}
-              />
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                inputMode="tel"
-                placeholder="ဖုန်း"
-                value={editForm.phone}
-                onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
-                disabled={isSubmitting}
-              />
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="ကား/နယ်မြေ (YM, WB)"
-                value={editForm.routeTag}
-                onChange={(event) => setEditForm({ ...editForm, routeTag: event.target.value })}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setEditingCustomer(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button 
-                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
-
-      {deletingCustomer ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
-          <div className="w-full max-w-md rounded-lg border border-rose-900/70 bg-slate-950 p-4 shadow-2xl sm:p-5">
-            <h2 className="text-lg font-semibold text-white">Customer ဖျက်မည်</h2>
-            <p className="mt-2 text-sm text-slate-300">
-              {deletingCustomer.name} ကိုဖျက်ပါမည်။ Transaction history များလည်း ဖျက်သွားမည်။
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setDeletingCustomer(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                className="min-h-12 rounded-md bg-rose-500 px-5 py-3 text-base font-semibold text-white hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={deleteCustomer}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Deleting..." : "Delete"}
-              </button>
+        {editingCustomer ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
+              <h3 className="text-lg font-semibold text-white">Edit Customer</h3>
+              <form className="mt-4 grid gap-3" onSubmit={updateCustomer}>
+                <input
+                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
+                  placeholder="အမည်"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  required
+                  disabled={isSubmitting}
+                />
+                <input
+                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
+                  inputMode="tel"
+                  placeholder="ဖုန်းနံပါတ်"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  disabled={isSubmitting}
+                />
+                <input
+                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
+                  placeholder="Route Tag"
+                  value={editForm.routeTag}
+                  onChange={(e) => setEditForm({ ...editForm, routeTag: e.target.value })}
+                  disabled={isSubmitting}
+                />
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
+                    onClick={() => setEditingCustomer(null)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="flex-1 rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {matchingKpay ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 px-3 pb-3 sm:items-center sm:px-4 sm:pb-0">
-          <form
-            className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-950 p-4 shadow-2xl sm:p-5"
-            onSubmit={matchKpay}
-          >
-            <h2 className="text-lg font-semibold text-white">KPay ကို Customer နှင့် တွဲမည်</h2>
-            <p className="mt-2 text-sm text-slate-400">
-              {formatMoney(matchingKpay.amount)} ဝင်ငွေကို customer အကြွေးထဲမှ နှုတ်ပါမည်။
-            </p>
-            <select
-              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-              value={matchCustomerId}
-              onChange={(event) => setMatchCustomerId(event.target.value)}
-              required
-              disabled={isSubmitting}
-            >
-              <option value="">Customer ရွေးပါ</option>
-              {customers.map((customer) => (
-                <option key={customer.id} value={customer.id}>
-                  {customer.name} - {formatMoney(customer.current_balance)}
-                </option>
-              ))}
-            </select>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => setMatchingKpay(null)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </button>
-              <button 
-                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Matching..." : "Match"}
-              </button>
+        {deletingCustomer ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
+              <h3 className="text-lg font-semibold text-white">Delete Customer?</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                သည် "{deletingCustomer.name}" ကို ဖျက်မည် သည်။ ဒီလုပ်ဆောင်ချက်ကို ပြန်လည်ပြင်ဆင်၍ မရပါ။
+              </p>
+              <div className="mt-6 flex gap-3">
+                <button
+                  className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
+                  onClick={() => setDeletingCustomer(null)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 rounded-md bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={deleteCustomer}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </div>
-          </form>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+
+        {matchingKpay ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
+              <h3 className="text-lg font-semibold text-white">Match KPay to Customer</h3>
+              <p className="mt-2 text-sm text-slate-400">
+                {formatMoney(matchingKpay.amount)} ကို customer နှင့် တွဲဆက်ပါ။
+              </p>
+              <form className="mt-4 grid gap-3" onSubmit={matchKpay}>
+                <select
+                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
+                  value={matchCustomerId}
+                  onChange={(e) => setMatchCustomerId(e.target.value)}
+                  required
+                  disabled={isSubmitting}
+                >
+                  <option value="">Customer ရွေးပါ...</option>
+                  {customers.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
+                    onClick={() => setMatchingKpay(null)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="flex-1 rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Matching..." : "Match"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        ) : null}
+      </div>
     </main>
   );
 }

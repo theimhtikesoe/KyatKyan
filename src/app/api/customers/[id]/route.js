@@ -12,12 +12,34 @@ export async function GET(_request, { params }) {
 
     const customer = await prisma.customer.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        routeTag: true,
+        current_balance: true,
+        createdAt: true,
         kpayAliases: {
+          select: {
+            id: true,
+            kpayName: true,
+          },
           orderBy: { kpayName: "asc" },
         },
         // Optimized: Limit ledger history to recent 50 entries for faster loading
         ledgers: {
+          select: {
+            id: true,
+            date: true,
+            type: true,
+            saleType: true,
+            itemSize: true,
+            cartons: true,
+            rate: true,
+            deductions: true,
+            amount: true,
+            note: true,
+          },
           orderBy: { date: "desc" },
           take: 50,
         },
@@ -48,6 +70,37 @@ export async function PATCH(request, { params }) {
         ...(body.phone !== undefined ? { phone: body.phone?.trim() || null } : {}),
         ...(body.routeTag !== undefined ? { routeTag: body.routeTag?.trim() || null } : {}),
       },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        routeTag: true,
+        current_balance: true,
+        createdAt: true,
+        kpayAliases: {
+          select: {
+            id: true,
+            kpayName: true,
+          },
+          orderBy: { kpayName: "asc" },
+        },
+        ledgers: {
+          select: {
+            id: true,
+            date: true,
+            type: true,
+            saleType: true,
+            itemSize: true,
+            cartons: true,
+            rate: true,
+            deductions: true,
+            amount: true,
+            note: true,
+          },
+          orderBy: { date: "desc" },
+          take: 50,
+        },
+      },
     });
 
     return NextResponse.json({ data: customer });
@@ -68,6 +121,14 @@ export async function DELETE(_request, { params }) {
 
     const customer = await prisma.customer.delete({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        phone: true,
+        routeTag: true,
+        current_balance: true,
+        createdAt: true,
+      },
     });
 
     return NextResponse.json({ data: customer });

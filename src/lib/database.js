@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 let setupPromise;
+let setupComplete = false;
 
 function isBenignSetupRace(error) {
   const code = error?.code || error?.meta?.code;
@@ -40,8 +41,19 @@ export function requireDatabaseUrl() {
 export async function ensureDatabase() {
   requireDatabaseUrl();
 
-  if (!setupPromise) {
-    setupPromise = (async () => {
+  // Return immediately if setup is already complete
+  if (setupComplete) {
+    return;
+  }
+
+  // If setup is in progress, wait for it to complete
+  if (setupPromise) {
+    return setupPromise;
+  }
+
+  // Start setup and cache the promise
+  setupPromise = (async () => {
+    try {
       await setupQuery(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
       const legacyCustomerId = await prisma.$queryRaw`
@@ -124,12 +136,20 @@ export async function ensureDatabase() {
         `ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "suggestedCustomerId" UUID`,
       );
 
+      // Create indexes for faster queries
       await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_customerId_idx" ON "Ledger"("customerId")`);
       await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_date_idx" ON "Ledger"("date")`);
       await setupQuery(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_status_idx" ON "UnverifiedKpay"("status")`);
       await setupQuery(`CREATE INDEX IF NOT EXISTS "UnverifiedKpay_kpayName_idx" ON "UnverifiedKpay"("kpayName")`);
-    })();
-  }
+      
+      // Mark setup as complete
+      setupComplete = true;
+    } catch (error) {
+      // Reset promises on error to allow retry
+      setupPromise = null;
+      throw error;
+    }
+  })();
 
   return setupPromise;
 }
