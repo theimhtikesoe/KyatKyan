@@ -50,6 +50,7 @@ export default function CustomerModal({ customer, onClose, onRefresh, isSubmitti
       setAmount('');
       setNote('');
       showAlert(`စာရင်းအသစ် ${formatMoney(amount)} (${transactionType === 'CREDIT' ? 'အကြွေးတိုး' : 'ငွေချေ'}) အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။`, "success");
+      // Optimized: Only refresh the customer data, not the entire dashboard
       await onRefresh();
     } catch (error) {
       showAlert(error.message, "error");
@@ -78,6 +79,7 @@ export default function CustomerModal({ customer, onClose, onRefresh, isSubmitti
       if (!response.ok) throw new Error(body.error || "Payment failed");
       
       showAlert(`ငွေပမာဏ ${formatMoney(payAmount)} အောင်မြင်စွာ ပေးချေပြီးပါပြီ။`, "success");
+      // Optimized: Only refresh the customer data
       await onRefresh();
     } catch (error) {
       showAlert(error.message, "error");

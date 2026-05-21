@@ -204,6 +204,7 @@ export default function Dashboard() {
           note: ledgerForm.note,
         }),
       });
+      // Clear form immediately after successful submission
       setLedgerForm({
         type: "CREDIT",
         saleType: "RETAIL",
@@ -214,8 +215,9 @@ export default function Dashboard() {
         amount: "",
         note: "",
       });
-      // Optimized: Only reload what's necessary
-      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId), loadReport()]);
+      // Optimized: Only reload the selected customer data (includes latest ledgers)
+      // This is more efficient than reloading the entire dashboard
+      await loadCustomer(selectedCustomerId);
       showAlert("Transaction အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
@@ -260,7 +262,8 @@ export default function Dashboard() {
         amount: "",
         note: "",
       });
-      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId), loadReport()]);
+      // Optimized: Only reload the selected customer data (includes latest ledgers)
+      await loadCustomer(selectedCustomerId);
       showAlert("Sales လက်ခြင်းအောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
@@ -287,11 +290,13 @@ export default function Dashboard() {
         }),
       });
       const customerId = matchCustomerId;
+      const kpayAmount = matchingKpay.amount;
       setMatchingKpay(null);
       setMatchCustomerId("");
       setSelectedCustomerId(customerId);
+      // Optimized: Only reload the matched customer and pending KPay list
       await Promise.all([loadDashboard(), loadCustomer(customerId)]);
-      showAlert(`KPay ${formatMoney(matchingKpay.amount)} အောင်မြင်စွာ တွဲဆက်ပြီးပါပြီ။`, "success");
+      showAlert(`KPay ${formatMoney(kpayAmount)} အောင်မြင်စွာ တွဲဆက်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
