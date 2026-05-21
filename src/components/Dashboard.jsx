@@ -105,7 +105,7 @@ export default function Dashboard() {
     setAlert(null);
   }, []);
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
       const [customerRows, kpayRows] = await Promise.all([
@@ -121,9 +121,9 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, showAlert]);
 
-  async function loadCustomer(id = selectedCustomerId) {
+  const loadCustomer = useCallback(async (id = selectedCustomerId) => {
     if (!id) {
       setSelectedCustomer(null);
       return;
@@ -137,21 +137,21 @@ export default function Dashboard() {
       setMessage(error.message);
       showAlert(error.message, "error");
     }
-  }
+  }, [selectedCustomerId, showAlert]);
 
   useEffect(() => {
     loadDashboard().catch((error) => {
       setMessage(error.message);
       showAlert(error.message, "error");
     });
-  }, [search]);
+  }, [loadDashboard, showAlert]);
 
   useEffect(() => {
     loadCustomer().catch((error) => {
       setMessage(error.message);
       showAlert(error.message, "error");
     });
-  }, [selectedCustomerId]);
+  }, [loadCustomer, showAlert]);
 
   const totalPending = useMemo(
     () => pendingKpay.reduce((sum, item) => sum + item.amount, 0),
@@ -454,7 +454,7 @@ export default function Dashboard() {
     }
   }
 
-  async function loadReport(date = reportDate) {
+  const loadReport = useCallback(async (date = reportDate) => {
     try {
       const data = await api(`/api/reports?date=${encodeURIComponent(date)}`);
       setReport(data);
@@ -462,13 +462,13 @@ export default function Dashboard() {
       setMessage(error.message);
       showAlert(error.message, "error");
     }
-  }
+  }, [reportDate, showAlert]);
 
   useEffect(() => {
     if (showExtraTools) {
       loadReport(reportDate);
     }
-  }, [reportDate, showExtraTools]);
+  }, [reportDate, showExtraTools, loadReport]);
 
   const computedSaleAmount = Math.max(
     0,
@@ -1056,7 +1056,7 @@ export default function Dashboard() {
             <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
               <h3 className="text-lg font-semibold text-white">Delete Customer?</h3>
               <p className="mt-2 text-sm text-slate-400">
-                သည် "{deletingCustomer.name}" ကို ဖျက်မည် သည်။ ဒီလုပ်ဆောင်ချက်ကို ပြန်လည်ပြင်ဆင်၍ မရပါ။
+                သည် &quot;{deletingCustomer.name}&quot; ကို ဖျက်မည် သည်။ ဒီလုပ်ဆောင်ချက်ကို ပြန်လည်ပြင်ဆင်၍ မရပါ။
               </p>
               <div className="mt-6 flex gap-3">
                 <button
