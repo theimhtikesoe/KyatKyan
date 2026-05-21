@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import CustomerModal from "./CustomerModal";
 
 const money = new Intl.NumberFormat("en-US");
 const today = new Date().toISOString().slice(0, 10);
@@ -91,6 +92,7 @@ export default function Dashboard() {
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [viewingCustomer, setViewingCustomer] = useState(null);
 
   // Show alert notification
   const showAlert = useCallback((msg, type = "success") => {
@@ -388,6 +390,22 @@ export default function Dashboard() {
         />
       )}
       
+      {viewingCustomer && (
+        <CustomerModal
+          customer={viewingCustomer}
+          onClose={() => setViewingCustomer(null)}
+          onRefresh={async () => {
+            await Promise.all([loadDashboard(), loadCustomer(viewingCustomer.id)]);
+            // Update the viewing customer state with fresh data if it's still open
+            const fresh = await api(`/api/customers/${viewingCustomer.id}`);
+            setViewingCustomer(fresh);
+          }}
+          isSubmitting={isSubmitting}
+          setIsSubmitting={setIsSubmitting}
+          showAlert={showAlert}
+        />
+      )}
+
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
         <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -546,11 +564,11 @@ export default function Dashboard() {
                       ? "border-cyan-400 bg-cyan-400/10"
                       : "border-slate-800 bg-slate-900/50 hover:border-slate-600"
                   }`}
-                  onClick={() => setSelectedCustomerId(customer.id)}
+                  onClick={() => setViewingCustomer(customer)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold text-white">{customer.name}</h3>
+                      <h3 className="font-semibold text-white hover:text-cyan-400 transition-colors">{customer.name}</h3>
                       <p className="mt-1 text-xs text-slate-400">
                         {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No contact"}
                       </p>
