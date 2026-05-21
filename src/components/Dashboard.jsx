@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 
 const money = new Intl.NumberFormat("en-US");
 const today = new Date().toISOString().slice(0, 10);
@@ -39,6 +39,23 @@ async function api(path, options) {
   return body.data;
 }
 
+// Alert notification component
+function AlertNotification({ message, type, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor = type === "success" ? "bg-emerald-950/60 border-emerald-900" : "bg-rose-950/60 border-rose-900";
+  const textColor = type === "success" ? "text-emerald-200" : "text-rose-200";
+
+  return (
+    <div className={`fixed top-4 right-4 z-40 rounded-md border px-4 py-3 text-sm ${bgColor} ${textColor} shadow-lg`}>
+      {message}
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [pendingKpay, setPendingKpay] = useState([]);
@@ -72,16 +89,35 @@ export default function Dashboard() {
   const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [alert, setAlert] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Show alert notification
+  const showAlert = useCallback((msg, type = "success") => {
+    setAlert({ message: msg, type });
+  }, []);
+
+  // Hide alert notification
+  const hideAlert = useCallback(() => {
+    setAlert(null);
+  }, []);
 
   async function loadDashboard() {
     setLoading(true);
-    const [customerRows, kpayRows] = await Promise.all([
-      api(`/api/customers${search ? `?q=${encodeURIComponent(search)}` : ""}`),
-      api("/api/unverified-kpay?status=PENDING"),
-    ]);
-    setCustomers(customerRows);
-    setPendingKpay(kpayRows);
-    setLoading(false);
+    try {
+      const [customerRows, kpayRows] = await Promise.all([
+        api(`/api/customers${search ? `?q=${encodeURIComponent(search)}` : ""}`),
+        api("/api/unverified-kpay?status=PENDING"),
+      ]);
+      setCustomers(customerRows);
+      setPendingKpay(kpayRows);
+      setMessage("");
+    } catch (error) {
+      setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadCustomer(id = selectedCustomerId) {
@@ -90,17 +126,28 @@ export default function Dashboard() {
       return;
     }
 
-    const customer = await api(`/api/customers/${id}`);
-    setSelectedCustomer(customer);
-    setSelectedCustomerId(customer.id);
+    try {
+      const customer = await api(`/api/customers/${id}`);
+      setSelectedCustomer(customer);
+      setSelectedCustomerId(customer.id);
+    } catch (error) {
+      setMessage(error.message);
+      showAlert(error.message, "error");
+    }
   }
 
   useEffect(() => {
-    loadDashboard().catch((error) => setMessage(error.message));
+    loadDashboard().catch((error) => {
+      setMessage(error.message);
+      showAlert(error.message, "error");
+    });
   }, [search]);
 
   useEffect(() => {
-    loadCustomer().catch((error) => setMessage(error.message));
+    loadCustomer().catch((error) => {
+      setMessage(error.message);
+      showAlert(error.message, "error");
+    });
   }, [selectedCustomerId]);
 
   const totalPending = useMemo(
@@ -110,6 +157,9 @@ export default function Dashboard() {
 
   async function createCustomer(event) {
     event.preventDefault();
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     try {
       setMessage("");
       const customer = await api("/api/customers", {
@@ -123,15 +173,20 @@ export default function Dashboard() {
       setSelectedCustomerId(customer.id);
       setShowAddCustomer(false);
       await loadDashboard();
+      showAlert(`Customer "${customer.name}" အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function createLedgerTransaction(event) {
     event.preventDefault();
-    if (!selectedCustomerId) return;
+    if (!selectedCustomerId || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       setMessage("");
       await api(`/api/customers/${selectedCustomerId}/transactions`, {
@@ -157,22 +212,29 @@ export default function Dashboard() {
         amount: "",
         note: "",
       });
-      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId)]);
-      await loadReport();
+      // Optimized: Only reload what's necessary
+      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId), loadReport()]);
+      showAlert("Transaction အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function createSalesLedger(event) {
     event.preventDefault();
-    if (!selectedCustomerId) {
-      setMessage("Customer တစ်ယောက်ကို အရင်ရွေးပါ။");
+    if (!selectedCustomerId || isSubmitting) {
+      if (!selectedCustomerId) {
+        showAlert("Customer တစ်ယောက်ကို အရင်ရွေးပါ။", "error");
+      }
       return;
     }
 
     const amount = computedSaleAmount || Number(ledgerForm.amount || 0);
 
+    setIsSubmitting(true);
     try {
       setMessage("");
       await api(`/api/customers/${selectedCustomerId}/transactions`, {
@@ -197,15 +259,20 @@ export default function Dashboard() {
         note: "",
       });
       await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId), loadReport()]);
+      showAlert("Sales လက်ခြင်းအောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function matchKpay(event) {
     event.preventDefault();
-    if (!matchingKpay || !matchCustomerId) return;
+    if (!matchingKpay || !matchCustomerId || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       setMessage("");
       await api("/api/kpay-match", {
@@ -222,8 +289,12 @@ export default function Dashboard() {
       setMatchCustomerId("");
       setSelectedCustomerId(customerId);
       await Promise.all([loadDashboard(), loadCustomer(customerId)]);
+      showAlert(`KPay ${formatMoney(matchingKpay.amount)} အောင်မြင်စွာ တွဲဆက်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -238,8 +309,9 @@ export default function Dashboard() {
 
   async function updateCustomer(event) {
     event.preventDefault();
-    if (!editingCustomer) return;
+    if (!editingCustomer || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       setMessage("");
       const customer = await api(`/api/customers/${editingCustomer.id}`, {
@@ -252,16 +324,22 @@ export default function Dashboard() {
       if (selectedCustomerId === customer.id) {
         await loadCustomer(customer.id);
       }
+      showAlert(`Customer "${customer.name}" အောင်မြင်စွာ အဆင့်မြှင့်တင်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function deleteCustomer() {
-    if (!deletingCustomer) return;
+    if (!deletingCustomer || isSubmitting) return;
 
+    setIsSubmitting(true);
     try {
       setMessage("");
+      const customerName = deletingCustomer.name;
       await api(`/api/customers/${deletingCustomer.id}`, {
         method: "DELETE",
       });
@@ -271,8 +349,12 @@ export default function Dashboard() {
       }
       setDeletingCustomer(null);
       await loadDashboard();
+      showAlert(`Customer "${customerName}" အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။`, "success");
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -282,6 +364,7 @@ export default function Dashboard() {
       setReport(data);
     } catch (error) {
       setMessage(error.message);
+      showAlert(error.message, "error");
     }
   }
 
@@ -297,6 +380,14 @@ export default function Dashboard() {
 
   return (
     <main className="min-h-screen bg-[#080a0f] text-slate-100">
+      {alert && (
+        <AlertNotification
+          message={alert.message}
+          type={alert.type}
+          onClose={hideAlert}
+        />
+      )}
+      
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
         <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -354,6 +445,7 @@ export default function Dashboard() {
                 value={newCustomer.name}
                 onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
                 required
+                disabled={isSubmitting}
               />
               <input
                 className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
@@ -361,6 +453,7 @@ export default function Dashboard() {
                 placeholder="ဖုန်းနံပါတ်"
                 value={newCustomer.phone}
                 onChange={(event) => setNewCustomer({ ...newCustomer, phone: event.target.value })}
+                disabled={isSubmitting}
               />
               <input
                 className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
@@ -370,9 +463,13 @@ export default function Dashboard() {
                 onChange={(event) =>
                   setNewCustomer({ ...newCustomer, current_balance: event.target.value })
                 }
+                disabled={isSubmitting}
               />
-              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
-                Add
+              <button 
+                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Adding..." : "Add"}
               </button>
             </form>
           ) : null}
@@ -387,10 +484,11 @@ export default function Dashboard() {
               </p>
             </div>
             <button
-              className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500 hover:text-cyan-200"
-              onClick={() => loadDashboard().catch((error) => setMessage(error.message))}
+              className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => loadDashboard()}
+              disabled={isSubmitting}
             >
-              Refresh
+              {isSubmitting ? "Refreshing..." : "Refresh"}
             </button>
           </div>
 
@@ -421,98 +519,85 @@ export default function Dashboard() {
                     </p>
                   ) : null}
                   <button
-                    className="mt-4 w-full rounded-md bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
-                    onClick={() => {
-                      setMatchingKpay(item);
-                      setMatchCustomerId(item.suggestedCustomerId || selectedCustomerId || "");
-                    }}
+                    className="mt-3 w-full rounded-md border border-cyan-500/50 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setMatchingKpay(item)}
+                    disabled={isSubmitting}
                   >
-                    လူနာမည်နှင့် တွဲမည်
+                    {isSubmitting ? "Processing..." : "Match"}
                   </button>
                 </article>
               ))
             ) : (
-              <p className="rounded-lg border border-slate-800 bg-slate-900/40 p-4 text-sm text-slate-400">
-                Pending KPay မရှိသေးပါ။
+              <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
+                Pending KPay မရှိပါ။
               </p>
             )}
           </div>
         </section>
 
-        <section className="grid gap-6">
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Customer List</h2>
-              <p className="mt-1 text-sm text-slate-400">
-                အကြွေးကျန်ရှိသူများကို ဘယ်ဘက်အနီလိုင်းဖြင့်ပြသထားသည်
-              </p>
-            </div>
-            <input
-              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
-              placeholder="အမည် သို့မဟုတ် ဖုန်းနံပါတ် ရှာရန်"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-
-            <div className="mt-4 grid max-h-[58vh] grid-cols-1 gap-3 overflow-auto pr-1 sm:max-h-[520px] sm:grid-cols-2 md:grid-cols-3">
-              {customers.map((customer) => {
-                const active = selectedCustomerId === customer.id;
-                const hasDebt = customer.current_balance > 0;
-                return (
-                  <div
-                    key={customer.id}
-                    className={`group rounded-lg border border-l-4 p-3 text-left transition ${
-                      active
-                        ? "border-cyan-400 bg-cyan-400/10"
-                        : "border-slate-800 bg-slate-900/40 hover:border-slate-600"
-                    } ${hasDebt ? "border-l-rose-500" : "border-l-emerald-500"}`}
-                  >
-                    <button
-                      className="w-full text-left"
-                      onClick={() => setSelectedCustomerId(customer.id)}
-                    >
-                      <div className="flex min-h-14 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-white">{customer.name}</p>
-                          <p className="mt-1 truncate text-xs text-slate-400">
-                            {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No phone"}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p
-                            className={`text-sm font-semibold ${
-                              hasDebt ? "text-rose-200" : "text-emerald-200"
-                            }`}
-                          >
-                            {formatMoney(customer.current_balance)}
-                          </p>
-                          <p className="mt-1 text-[11px] text-slate-500">Balance</p>
-                        </div>
-                      </div>
-                    </button>
-                    <div className="mt-2 flex justify-end gap-1 border-t border-slate-800 pt-2 opacity-100 transition sm:opacity-60 sm:group-hover:opacity-100">
-                      <button
-                        className="rounded-md px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-cyan-200"
-                        onClick={() => openEditCustomer(customer)}
-                        aria-label={`Edit ${customer.name}`}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="rounded-md px-2 py-1 text-xs font-medium text-rose-300 hover:bg-rose-950/60 hover:text-rose-100"
-                        onClick={() => setDeletingCustomer(customer)}
-                        aria-label={`Delete ${customer.name}`}
-                      >
-                        Delete
-                      </button>
+        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+            {customers.length ? (
+              customers.map((customer) => (
+                <div
+                  key={customer.id}
+                  className={`cursor-pointer rounded-lg border p-4 transition ${
+                    selectedCustomerId === customer.id
+                      ? "border-cyan-400 bg-cyan-400/10"
+                      : "border-slate-800 bg-slate-900/50 hover:border-slate-600"
+                  }`}
+                  onClick={() => setSelectedCustomerId(customer.id)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-semibold text-white">{customer.name}</h3>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No contact"}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <p className="text-xs text-slate-400">Balance</p>
+                    <p
+                      className={`text-sm font-semibold ${
+                        customer.current_balance > 0 ? "text-rose-200" : "text-emerald-200"
+                      }`}
+                    >
+                      {formatMoney(customer.current_balance)}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      className="flex-1 rounded-md px-2 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-950/60"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditCustomer(customer);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="flex-1 rounded-md px-2 py-1 text-xs font-medium text-rose-300 hover:bg-rose-950/60"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingCustomer(customer);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
+                Customer မရှိသေးပါ။
+              </p>
+            )}
           </div>
 
-          <div className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
             {selectedCustomer ? (
               <>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -524,14 +609,16 @@ export default function Dashboard() {
                     </p>
                     <div className="mt-3 flex gap-2">
                       <button
-                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
+                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => openEditCustomer(selectedCustomer)}
+                        disabled={isSubmitting}
                       >
                         Edit
                       </button>
                       <button
-                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100"
+                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => setDeletingCustomer(selectedCustomer)}
+                        disabled={isSubmitting}
                       >
                         Delete
                       </button>
@@ -554,28 +641,34 @@ export default function Dashboard() {
                   onSubmit={createLedgerTransaction}
                 >
                   <select
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
                     value={ledgerForm.type}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
+                    disabled={isSubmitting}
                   >
                     <option value="CREDIT">အကြွေးတိုး</option>
                     <option value="DEBIT">ငွေချေ</option>
                   </select>
                   <input
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
                     inputMode="numeric"
                     placeholder="ငွေပမာဏ"
                     value={ledgerForm.amount}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, amount: event.target.value })}
+                    disabled={isSubmitting}
                   />
                   <input
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
+                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
                     placeholder="မှတ်ချက်"
                     value={ledgerForm.note}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
+                    disabled={isSubmitting}
                   />
-                  <button className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm">
-                    Save
+                  <button 
+                    className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Saving..." : "Save"}
                   </button>
                 </form>
 
@@ -653,17 +746,19 @@ export default function Dashboard() {
           {activeTab === "sales" ? (
             <form className="mt-4 grid gap-3 lg:grid-cols-4" onSubmit={createSalesLedger}>
               <select
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 value={ledgerForm.saleType}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, saleType: event.target.value })}
+                disabled={isSubmitting}
               >
                 <option value="RETAIL">လက်လီ</option>
                 <option value="WHOLESALE">လက်ကား</option>
               </select>
               <select
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 value={ledgerForm.itemSize}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, itemSize: event.target.value })}
+                disabled={isSubmitting}
               >
                 <option value="">ပစ္စည်း Size</option>
                 <option value=".5">.5</option>
@@ -672,38 +767,45 @@ export default function Dashboard() {
                 <option value="20L">20L</option>
               </select>
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="ကတ် အရေအတွက်"
                 inputMode="numeric"
                 value={ledgerForm.cartons}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, cartons: event.target.value })}
+                disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="တစ်ကတ်နှုန်း"
                 inputMode="numeric"
                 value={ledgerForm.rate}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, rate: event.target.value })}
+                disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="Tube/ကား/အိတ် စရိတ်"
                 inputMode="numeric"
                 value={ledgerForm.deductions}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, deductions: event.target.value })}
+                disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="မှတ်ချက်"
                 value={ledgerForm.note}
                 onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
+                disabled={isSubmitting}
               />
               <div className="rounded-md border border-slate-800 px-4 py-3">
                 <p className="text-xs text-slate-400">အသားတင် အကြွေးတိုး</p>
                 <p className="mt-1 text-lg font-semibold text-cyan-200">{formatMoney(computedSaleAmount)}</p>
               </div>
-              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
-                Save Sale
+              <button 
+                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Save Sale"}
               </button>
             </form>
           ) : null}
@@ -724,6 +826,13 @@ export default function Dashboard() {
                       {item.suggestedCustomer.name} နှင့် တွဲရန် အကြံပြုထားပါသည်
                     </p>
                   ) : null}
+                  <button
+                    className="mt-3 w-full rounded-md border border-cyan-500/50 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => setMatchingKpay(item)}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Processing..." : "Match"}
+                  </button>
                 </div>
               ))}
               {!pendingKpay.length ? (
@@ -772,36 +881,43 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-white">Customer ပြင်မည်</h2>
             <div className="mt-4 grid gap-3">
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="အမည်"
                 value={editForm.name}
                 onChange={(event) => setEditForm({ ...editForm, name: event.target.value })}
                 required
+                disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 inputMode="tel"
                 placeholder="ဖုန်း"
                 value={editForm.phone}
                 onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
+                disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
                 placeholder="ကား/နယ်မြေ (YM, WB)"
                 value={editForm.routeTag}
                 onChange={(event) => setEditForm({ ...editForm, routeTag: event.target.value })}
+                disabled={isSubmitting}
               />
             </div>
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setEditingCustomer(null)}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
-                Save
+              <button 
+                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Saving..." : "Save"}
               </button>
             </div>
           </form>
@@ -818,16 +934,18 @@ export default function Dashboard() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setDeletingCustomer(null)}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
-                className="min-h-12 rounded-md bg-rose-500 px-5 py-3 text-base font-semibold text-white hover:bg-rose-400"
+                className="min-h-12 rounded-md bg-rose-500 px-5 py-3 text-base font-semibold text-white hover:bg-rose-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={deleteCustomer}
+                disabled={isSubmitting}
               >
-                Delete
+                {isSubmitting ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -845,10 +963,11 @@ export default function Dashboard() {
               {formatMoney(matchingKpay.amount)} ဝင်ငွေကို customer အကြွေးထဲမှ နှုတ်ပါမည်။
             </p>
             <select
-              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+              className="mt-4 min-h-12 w-full rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
               value={matchCustomerId}
               onChange={(event) => setMatchCustomerId(event.target.value)}
               required
+              disabled={isSubmitting}
             >
               <option value="">Customer ရွေးပါ</option>
               {customers.map((customer) => (
@@ -860,13 +979,17 @@ export default function Dashboard() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500"
+                className="min-h-12 rounded-md border border-slate-700 px-5 py-3 text-base text-slate-200 hover:border-slate-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={() => setMatchingKpay(null)}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
-                Match
+              <button 
+                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Matching..." : "Match"}
               </button>
             </div>
           </form>

@@ -16,6 +16,7 @@ export async function GET(request) {
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
 
+    // Optimized: Only fetch what's needed for totals calculation
     const ledgers = await prisma.ledger.findMany({
       where: {
         date: {
@@ -23,10 +24,19 @@ export async function GET(request) {
           lt: end,
         },
       },
-      include: { customer: true },
+      select: {
+        id: true,
+        type: true,
+        saleType: true,
+        amount: true,
+        deductions: true,
+        date: true,
+        note: true,
+      },
       orderBy: { date: "desc" },
     });
 
+    // Optimized: Calculate totals in-memory without full customer joins
     const totals = ledgers.reduce(
       (summary, ledger) => {
         if (ledger.type === "CREDIT") {
@@ -52,7 +62,7 @@ export async function GET(request) {
           grossSales: totals.retail + totals.wholesale,
           netSales: totals.retail + totals.wholesale - totals.deductions,
         },
-        ledgers,
+        ledgerCount: ledgers.length,
       },
     });
   } catch (error) {

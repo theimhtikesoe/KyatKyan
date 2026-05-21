@@ -16,8 +16,10 @@ export async function GET(_request, { params }) {
         kpayAliases: {
           orderBy: { kpayName: "asc" },
         },
+        // Optimized: Limit ledger history to recent 50 entries for faster loading
         ledgers: {
           orderBy: { date: "desc" },
+          take: 50,
         },
       },
     });
