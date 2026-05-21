@@ -17,15 +17,48 @@ function formatDate(value) {
 
 export default function CustomerModal({ customer, onClose, onRefresh, isSubmitting, setIsSubmitting, showAlert }) {
   const [activeTab, setActiveTab] = useState('pending');
+  
+  // Manual transaction states
+  const [transactionType, setTransactionType] = useState('CREDIT');
+  const [amount, setAmount] = useState('');
+  const [note, setNote] = useState('');
 
-  // Filter ledgers by type
-  // CREDIT = Debt (Pending if not balanced by a DEBIT)
-  // DEBIT = Payment (Settled)
   const pendingList = (customer.ledgers || []).filter(l => l.type === "CREDIT");
   const paidList = (customer.ledgers || []).filter(l => l.type === "DEBIT");
   const totalDebt = customer.current_balance;
 
-  const handleQuickPay = async (amount, note = "Quick Pay") => {
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    if (!amount || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/customers/${customer.id}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: transactionType,
+          amount: Number(amount),
+          note: note,
+          saleType: 'RETAIL'
+        })
+      });
+
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Transaction failed");
+
+      setAmount('');
+      setNote('');
+      showAlert(`စာရင်းအသစ် ${formatMoney(amount)} (${transactionType === 'CREDIT' ? 'အကြွေးတိုး' : 'ငွေချေ'}) အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။`, "success");
+      await onRefresh();
+    } catch (error) {
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleQuickPay = async (payAmount, payNote = "Quick Pay") => {
     if (isSubmitting) return;
     
     setIsSubmitting(true);
@@ -35,8 +68,8 @@ export default function CustomerModal({ customer, onClose, onRefresh, isSubmitti
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           type: 'DEBIT', 
-          amount, 
-          note,
+          amount: payAmount, 
+          note: payNote,
           saleType: 'RETAIL'
         })
       });
@@ -44,9 +77,8 @@ export default function CustomerModal({ customer, onClose, onRefresh, isSubmitti
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "Payment failed");
       
-      showAlert(`ငွေပမာဏ ${formatMoney(amount)} အောင်မြင်စွာ ပေးချေပြီးပါပြီ။`, "success");
+      showAlert(`ငွေပမာဏ ${formatMoney(payAmount)} အောင်မြင်စွာ ပေးချေပြီးပါပြီ။`, "success");
       await onRefresh();
-      onClose();
     } catch (error) {
       showAlert(error.message, "error");
     } finally {
@@ -100,58 +132,108 @@ export default function CustomerModal({ customer, onClose, onRefresh, isSubmitti
           </button>
         </div>
 
-        {/* Tab Content / Lists */}
-        <div className="flex-1 overflow-y-auto p-6 max-h-[400px] bg-slate-900/50">
-          {activeTab === 'pending' ? (
-            pendingList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                <div className="mb-3 text-4xl">🎉</div>
-                <p>အကြွေးစာရင်း မရှိပါ</p>
+        {/* Modal Main Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 max-h-[500px] bg-slate-900/50">
+          
+          {/* Manual Input Form (Show in Pending Tab) */}
+          {activeTab === 'pending' && (
+            <form onSubmit={handleAddTransaction} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-tight">📝 စာရင်းအသစ်သွင်းရန်</p>
+              
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <select 
+                  value={transactionType}
+                  onChange={(e) => setTransactionType(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  disabled={isSubmitting}
+                >
+                  <option value="CREDIT">အကြွေးတိုး</option>
+                  <option value="DEBIT">ငွေချေ</option>
+                </select>
+
+                <input 
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="ငွေပမာဏ"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  disabled={isSubmitting}
+                />
+
+                <input 
+                  type="text"
+                  placeholder="မှတ်ချက်"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-3 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  disabled={isSubmitting}
+                />
               </div>
-            ) : (
-              <div className="space-y-3">
-                {pendingList.map((item) => (
-                  <div key={item.id} className="group flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 p-4 transition-colors hover:border-slate-700">
-                    <div>
-                      <p className="text-lg font-bold text-white">{formatMoney(item.amount)}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {formatDate(item.date)} • {item.note || 'မှတ်ချက်မရှိ'}
-                      </p>
-                    </div>
-                    <button 
-                      onClick={() => handleQuickPay(item.amount, `Payment for: ${item.note || formatMoney(item.amount)}`)}
-                      className="rounded-md bg-cyan-600 px-4 py-2 text-xs font-bold text-white transition-all hover:bg-cyan-500 hover:shadow-lg hover:shadow-cyan-600/20 disabled:opacity-50"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "..." : "ဘေလ်ချေမည်"}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            paidList.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                <p>ရှင်းပြီးသားစာရင်း မရှိသေးပါ</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {paidList.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-lg border border-emerald-900/20 bg-emerald-950/10 p-4">
-                    <div>
-                      <p className="text-lg font-bold text-emerald-400">-{formatMoney(item.amount)}</p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {formatDate(item.date)} • {item.note || 'မှတ်ချက်မရှိ'}
-                      </p>
-                    </div>
-                    <span className="rounded bg-emerald-400/10 px-2 py-1 text-[10px] font-black text-emerald-400 uppercase tracking-tighter border border-emerald-400/20">
-                      PAID
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )
+
+              <button 
+                type="submit"
+                className="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold py-3 rounded-lg transition-all hover:shadow-lg hover:shadow-cyan-600/20 disabled:opacity-50"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "သိမ်းဆည်းနေပါသည်..." : "+ စာရင်းသွင်းမည်"}
+              </button>
+            </form>
           )}
+
+          {/* History Lists */}
+          <div>
+            {activeTab === 'pending' ? (
+              pendingList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <div className="mb-3 text-4xl">🎉</div>
+                  <p>အကြွေးစာရင်း မရှိပါ</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingList.map((item) => (
+                    <div key={item.id} className="group flex items-center justify-between rounded-lg border border-slate-800 bg-slate-950 p-4 transition-colors hover:border-slate-700">
+                      <div>
+                        <p className="text-lg font-bold text-white">{formatMoney(item.amount)}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatDate(item.date)} • {item.note || 'မှတ်ချက်မရှိ'}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => handleQuickPay(item.amount, `Payment for: ${item.note || formatMoney(item.amount)}`)}
+                        className="rounded-md bg-slate-800 px-4 py-2 text-xs font-bold text-cyan-400 transition-all hover:bg-slate-700 hover:text-cyan-300 disabled:opacity-50"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "..." : "ဘေလ်ချေ"}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              paidList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
+                  <p>ရှင်းပြီးသားစာရင်း မရှိသေးပါ</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {paidList.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between rounded-lg border border-emerald-900/20 bg-emerald-950/10 p-4">
+                      <div>
+                        <p className="text-lg font-bold text-emerald-400">-{formatMoney(item.amount)}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatDate(item.date)} • {item.note || 'မှတ်ချက်မရှိ'}
+                        </p>
+                      </div>
+                      <span className="rounded bg-emerald-400/10 px-2 py-1 text-[10px] font-black text-emerald-400 uppercase tracking-tighter border border-emerald-400/20">
+                        PAID
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+          </div>
         </div>
 
         {/* Footer Actions */}
