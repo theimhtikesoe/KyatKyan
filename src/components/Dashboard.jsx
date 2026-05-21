@@ -84,10 +84,11 @@ export default function Dashboard() {
     amount: "",
     note: "",
   });
-  const [activeTab, setActiveTab] = useState("sales");
+  const [activeTab, setActiveTab] = useState("kpay");
   const [reportDate, setReportDate] = useState(today);
   const [report, setReport] = useState(null);
   const [showAddCustomer, setShowAddCustomer] = useState(true);
+  const [showExtraTools, setShowExtraTools] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
@@ -464,8 +465,10 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    loadReport(reportDate);
-  }, [reportDate]);
+    if (showExtraTools) {
+      loadReport(reportDate);
+    }
+  }, [reportDate, showExtraTools]);
 
   const computedSaleAmount = Math.max(
     0,
@@ -820,11 +823,23 @@ export default function Dashboard() {
         </section>
 
         <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Tools & Reports</h2>
+            <button
+              className="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:border-cyan-500 hover:bg-cyan-950/30"
+              onClick={() => setShowExtraTools(!showExtraTools)}
+            >
+              {showExtraTools ? "Hide Extra Tools" : "Show Extra Tools"}
+            </button>
+          </div>
+
           <div className="grid gap-2 sm:grid-cols-3">
             {[
-              ["sales", "လက်လီ/လက်ကား အဝင်ဖောင်"],
               ["kpay", "KPay Auto-Suggestion"],
-              ["reports", "စက်ရုံချုပ် စာရင်းချုပ်"],
+              ...(showExtraTools ? [
+                ["sales", "လက်လီ/လက်ကား အဝင်ဖောင်"],
+                ["reports", "စက်ရုံချုပ် စာရင်းချုပ်"]
+              ] : [])
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -833,7 +848,10 @@ export default function Dashboard() {
                     ? "border-cyan-400 bg-cyan-400/10 text-cyan-100"
                     : "border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-600"
                 }`}
-                onClick={() => setActiveTab(id)}
+                onClick={() => {
+                  setActiveTab(id);
+                  if (id === "reports" && !report) loadReport(reportDate);
+                }}
               >
                 {label}
               </button>
