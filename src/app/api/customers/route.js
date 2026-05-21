@@ -17,6 +17,7 @@ export async function GET(request) {
             OR: [
               { name: { contains: q, mode: "insensitive" } },
               { phone: { contains: q, mode: "insensitive" } },
+              { routeTag: { contains: q, mode: "insensitive" } },
             ],
           }
         : undefined,
@@ -44,6 +45,7 @@ export async function POST(request) {
       data: {
         name,
         phone: body.phone?.trim() || null,
+        routeTag: body.routeTag?.trim() || null,
         current_balance: Number(body.current_balance || 0),
       },
     });

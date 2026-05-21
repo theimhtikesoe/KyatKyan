@@ -5,17 +5,18 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 
 function balanceDelta(type, amount) {
-  return type === "DEBIT" ? amount : -amount;
+  return type === "CREDIT" ? amount : -amount;
 }
 
 export async function POST(request, { params }) {
   try {
     await ensureDatabase();
 
-    const customer_id = Number(params.id);
+    const customerId = params.id;
     const body = await request.json();
-    const type = body.type === "CREDIT" ? "CREDIT" : "DEBIT";
+    const type = body.type === "DEBIT" ? "DEBIT" : "CREDIT";
     const amount = Math.round(Number(body.amount || 0));
+    const deductions = Math.round(Number(body.deductions || 0));
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: "amount must be greater than zero" }, { status: 400 });
@@ -23,7 +24,7 @@ export async function POST(request, { params }) {
 
     const result = await prisma.$transaction(async (tx) => {
       const customer = await tx.customer.update({
-        where: { id: customer_id },
+        where: { id: customerId },
         data: {
           current_balance: {
             increment: balanceDelta(type, amount),
@@ -31,17 +32,22 @@ export async function POST(request, { params }) {
         },
       });
 
-      const transaction = await tx.ledgerTransaction.create({
+      const ledger = await tx.ledger.create({
         data: {
-          customer_id,
+          customerId,
           type,
+          saleType: body.saleType || "RETAIL",
+          itemSize: body.itemSize?.trim() || null,
+          cartons: body.cartons ? Math.round(Number(body.cartons)) : null,
+          rate: body.rate ? Math.round(Number(body.rate)) : null,
+          deductions,
           amount,
           note: body.note?.trim() || null,
           date: body.date ? new Date(body.date) : new Date(),
         },
       });
 
-      return { customer, transaction };
+      return { customer, ledger };
     });
 
     return NextResponse.json({ data: result }, { status: 201 });

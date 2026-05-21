@@ -9,8 +9,8 @@ export async function POST(request) {
     await ensureDatabase();
 
     const body = await request.json();
-    const unverifiedKpayId = Number(body.unverifiedKpayId);
-    const customerId = Number(body.customerId);
+    const unverifiedKpayId = body.pendingKpayId || body.unverifiedKpayId;
+    const customerId = body.customerId;
 
     if (!unverifiedKpayId || !customerId) {
       return NextResponse.json(
@@ -28,31 +28,43 @@ export async function POST(request) {
         throw new Error("KPay item is not pending");
       }
 
+      const amount = Math.round(Number(body.amount || kpay.amount || 0));
+      const kpayName = body.kpayName?.trim() || kpay.kpayName || null;
+
+      if (kpayName) {
+        await tx.kpayAlias.upsert({
+          where: { kpayName },
+          update: { customerId },
+          create: { kpayName, customerId },
+        });
+      }
+
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
           current_balance: {
-            decrement: kpay.amount,
+            decrement: amount,
           },
         },
       });
 
-      const transaction = await tx.ledgerTransaction.create({
+      const ledger = await tx.ledger.create({
         data: {
-          customer_id: customerId,
-          type: "CREDIT",
-          amount: kpay.amount,
-          note: `Matched KPay #${kpay.id}`,
+          customerId,
+          type: "DEBIT",
+          saleType: body.saleType || "RETAIL",
+          amount,
+          deductions: 0,
+          note: `Matched KPay${kpayName ? `: ${kpayName}` : ""}`,
           date: kpay.createdAt,
         },
       });
 
-      const matched = await tx.unverifiedKpay.update({
+      const matched = await tx.unverifiedKpay.delete({
         where: { id: unverifiedKpayId },
-        data: { status: "MATCHED" },
       });
 
-      return { customer, transaction, kpay: matched };
+      return { customer, ledger, kpay: matched };
     });
 
     return NextResponse.json({ data: result });

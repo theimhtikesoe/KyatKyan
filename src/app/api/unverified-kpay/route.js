@@ -13,6 +13,9 @@ export async function GET(request) {
 
     const items = await prisma.unverifiedKpay.findMany({
       where: { status },
+      include: {
+        suggestedCustomer: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 

@@ -8,12 +8,15 @@ export async function GET(_request, { params }) {
   try {
     await ensureDatabase();
 
-    const id = Number(params.id);
+    const id = params.id;
 
     const customer = await prisma.customer.findUnique({
       where: { id },
       include: {
-        transactions: {
+        kpayAliases: {
+          orderBy: { kpayName: "asc" },
+        },
+        ledgers: {
           orderBy: { date: "desc" },
         },
       },
@@ -33,7 +36,7 @@ export async function PATCH(request, { params }) {
   try {
     await ensureDatabase();
 
-    const id = Number(params.id);
+    const id = params.id;
     const body = await request.json();
 
     const customer = await prisma.customer.update({
@@ -41,6 +44,7 @@ export async function PATCH(request, { params }) {
       data: {
         ...(body.name !== undefined ? { name: body.name.trim() } : {}),
         ...(body.phone !== undefined ? { phone: body.phone?.trim() || null } : {}),
+        ...(body.routeTag !== undefined ? { routeTag: body.routeTag?.trim() || null } : {}),
       },
     });
 
@@ -54,7 +58,7 @@ export async function DELETE(_request, { params }) {
   try {
     await ensureDatabase();
 
-    const id = Number(params.id);
+    const id = params.id;
 
     if (!id) {
       return NextResponse.json({ error: "Customer id is required" }, { status: 400 });

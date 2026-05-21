@@ -9,31 +9,53 @@ datasource db {
 }
 
 model Customer {
-  id              Int                 @id @default(autoincrement())
-  name            String
-  phone           String?
-  current_balance Int                 @default(0)
-  createdAt       DateTime            @default(now())
-  transactions    LedgerTransaction[]
+  id               String           @id @default(uuid()) @db.Uuid
+  name             String
+  phone            String?
+  routeTag         String?
+  current_balance  Int              @default(0)
+  kpayAliases      KpayAlias[]
+  ledgers          Ledger[]
+  suggestedKpay    UnverifiedKpay[] @relation("KpaySuggestion")
+  createdAt        DateTime         @default(now())
 }
 
-model LedgerTransaction {
-  id          Int             @id @default(autoincrement())
-  customer_id Int
-  customer    Customer        @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  date        DateTime        @default(now())
+model KpayAlias {
+  id         String   @id @default(uuid()) @db.Uuid
+  kpayName   String   @unique
+  customerId String   @db.Uuid
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model Ledger {
+  id          String   @id @default(uuid()) @db.Uuid
+  customerId  String   @db.Uuid
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   type        String
+  saleType    String
+  itemSize    String?
+  cartons     Int?
+  rate        Int?
+  deductions  Int      @default(0)
   amount      Int
   note        String?
-  createdAt   DateTime        @default(now())
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
 
-  @@index([customer_id])
+  @@index([customerId])
+  @@index([date])
 }
 
 model UnverifiedKpay {
-  id        Int        @id @default(autoincrement())
-  raw_text  String
-  amount    Int
-  status    String   @default("PENDING")
-  createdAt DateTime   @default(now())
+  id                  String    @id @default(uuid()) @db.Uuid
+  raw_text            String
+  kpayName            String?
+  amount              Int
+  status              String    @default("PENDING")
+  suggestedCustomerId String?   @db.Uuid
+  suggestedCustomer   Customer? @relation("KpaySuggestion", fields: [suggestedCustomerId], references: [id])
+  createdAt           DateTime  @default(now())
+
+  @@index([status])
+  @@index([kpayName])
 }

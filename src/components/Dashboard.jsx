@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const money = new Intl.NumberFormat("en-US");
+const today = new Date().toISOString().slice(0, 10);
 
 function formatMoney(value) {
   return `${money.format(Number(value || 0))} Ks`;
@@ -48,9 +49,26 @@ export default function Dashboard() {
   const [matchCustomerId, setMatchCustomerId] = useState("");
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [deletingCustomer, setDeletingCustomer] = useState(null);
-  const [editForm, setEditForm] = useState({ name: "", phone: "" });
-  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", current_balance: "" });
-  const [ledgerForm, setLedgerForm] = useState({ type: "DEBIT", amount: "", note: "" });
+  const [editForm, setEditForm] = useState({ name: "", phone: "", routeTag: "" });
+  const [newCustomer, setNewCustomer] = useState({
+    name: "",
+    phone: "",
+    routeTag: "",
+    current_balance: "",
+  });
+  const [ledgerForm, setLedgerForm] = useState({
+    type: "CREDIT",
+    saleType: "RETAIL",
+    itemSize: "",
+    cartons: "",
+    rate: "",
+    deductions: "",
+    amount: "",
+    note: "",
+  });
+  const [activeTab, setActiveTab] = useState("sales");
+  const [reportDate, setReportDate] = useState(today);
+  const [report, setReport] = useState(null);
   const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -101,7 +119,7 @@ export default function Dashboard() {
           current_balance: Number(newCustomer.current_balance || 0),
         }),
       });
-      setNewCustomer({ name: "", phone: "", current_balance: "" });
+      setNewCustomer({ name: "", phone: "", routeTag: "", current_balance: "" });
       setSelectedCustomerId(customer.id);
       setShowAddCustomer(false);
       await loadDashboard();
@@ -120,12 +138,65 @@ export default function Dashboard() {
         method: "POST",
         body: JSON.stringify({
           type: ledgerForm.type,
+          saleType: ledgerForm.saleType,
+          itemSize: ledgerForm.itemSize,
+          cartons: Number(ledgerForm.cartons || 0) || null,
+          rate: Number(ledgerForm.rate || 0) || null,
+          deductions: Number(ledgerForm.deductions || 0),
           amount: Number(ledgerForm.amount),
           note: ledgerForm.note,
         }),
       });
-      setLedgerForm({ type: "DEBIT", amount: "", note: "" });
+      setLedgerForm({
+        type: "CREDIT",
+        saleType: "RETAIL",
+        itemSize: "",
+        cartons: "",
+        rate: "",
+        deductions: "",
+        amount: "",
+        note: "",
+      });
       await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId)]);
+      await loadReport();
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  async function createSalesLedger(event) {
+    event.preventDefault();
+    if (!selectedCustomerId) {
+      setMessage("Customer တစ်ယောက်ကို အရင်ရွေးပါ။");
+      return;
+    }
+
+    const amount = computedSaleAmount || Number(ledgerForm.amount || 0);
+
+    try {
+      setMessage("");
+      await api(`/api/customers/${selectedCustomerId}/transactions`, {
+        method: "POST",
+        body: JSON.stringify({
+          ...ledgerForm,
+          type: "CREDIT",
+          amount,
+          cartons: Number(ledgerForm.cartons || 0) || null,
+          rate: Number(ledgerForm.rate || 0) || null,
+          deductions: Number(ledgerForm.deductions || 0),
+        }),
+      });
+      setLedgerForm({
+        type: "CREDIT",
+        saleType: "RETAIL",
+        itemSize: "",
+        cartons: "",
+        rate: "",
+        deductions: "",
+        amount: "",
+        note: "",
+      });
+      await Promise.all([loadDashboard(), loadCustomer(selectedCustomerId), loadReport()]);
     } catch (error) {
       setMessage(error.message);
     }
@@ -141,10 +212,12 @@ export default function Dashboard() {
         method: "POST",
         body: JSON.stringify({
           unverifiedKpayId: matchingKpay.id,
-          customerId: Number(matchCustomerId),
+          customerId: matchCustomerId,
+          kpayName: matchingKpay.kpayName,
+          amount: matchingKpay.amount,
         }),
       });
-      const customerId = Number(matchCustomerId);
+      const customerId = matchCustomerId;
       setMatchingKpay(null);
       setMatchCustomerId("");
       setSelectedCustomerId(customerId);
@@ -159,6 +232,7 @@ export default function Dashboard() {
     setEditForm({
       name: customer.name || "",
       phone: customer.phone || "",
+      routeTag: customer.routeTag || "",
     });
   }
 
@@ -173,7 +247,7 @@ export default function Dashboard() {
         body: JSON.stringify(editForm),
       });
       setEditingCustomer(null);
-      setEditForm({ name: "", phone: "" });
+      setEditForm({ name: "", phone: "", routeTag: "" });
       await loadDashboard();
       if (selectedCustomerId === customer.id) {
         await loadCustomer(customer.id);
@@ -201,6 +275,25 @@ export default function Dashboard() {
       setMessage(error.message);
     }
   }
+
+  async function loadReport(date = reportDate) {
+    try {
+      const data = await api(`/api/reports?date=${encodeURIComponent(date)}`);
+      setReport(data);
+    } catch (error) {
+      setMessage(error.message);
+    }
+  }
+
+  useEffect(() => {
+    loadReport(reportDate);
+  }, [reportDate]);
+
+  const computedSaleAmount = Math.max(
+    0,
+    Math.round(Number(ledgerForm.cartons || 0) * Number(ledgerForm.rate || 0)) -
+      Math.round(Number(ledgerForm.deductions || 0)),
+  );
 
   return (
     <main className="min-h-screen bg-[#080a0f] text-slate-100">
@@ -322,11 +415,16 @@ export default function Dashboard() {
                   <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-300">
                     {item.raw_text}
                   </p>
+                  {item.suggestedCustomer ? (
+                    <p className="mt-3 rounded-md border border-cyan-500/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+                      {item.suggestedCustomer.name} နှင့် တွဲရန် အကြံပြုထားပါသည်
+                    </p>
+                  ) : null}
                   <button
                     className="mt-4 w-full rounded-md bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-300"
                     onClick={() => {
                       setMatchingKpay(item);
-                      setMatchCustomerId(selectedCustomerId || "");
+                      setMatchCustomerId(item.suggestedCustomerId || selectedCustomerId || "");
                     }}
                   >
                     လူနာမည်နှင့် တွဲမည်
@@ -377,7 +475,7 @@ export default function Dashboard() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-white">{customer.name}</p>
                           <p className="mt-1 truncate text-xs text-slate-400">
-                            {customer.phone || "No phone"}
+                            {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No phone"}
                           </p>
                         </div>
                         <div className="shrink-0 text-right">
@@ -420,7 +518,10 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-white">{selectedCustomer.name}</h2>
-                    <p className="mt-1 text-sm text-slate-400">{selectedCustomer.phone || "No phone"}</p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {[selectedCustomer.phone, selectedCustomer.routeTag].filter(Boolean).join(" / ") ||
+                        "No phone"}
+                    </p>
                     <div className="mt-3 flex gap-2">
                       <button
                         className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200"
@@ -457,8 +558,8 @@ export default function Dashboard() {
                     value={ledgerForm.type}
                     onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
                   >
-                    <option value="DEBIT">အကြွေးတိုး</option>
-                    <option value="CREDIT">ငွေချေ</option>
+                    <option value="CREDIT">အကြွေးတိုး</option>
+                    <option value="DEBIT">ငွေချေ</option>
                   </select>
                   <input
                     className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm"
@@ -489,7 +590,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {selectedCustomer.transactions.map((transaction) => (
+                      {(selectedCustomer.ledgers || []).map((transaction) => (
                         <tr key={transaction.id} className="bg-slate-950">
                           <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
                           <td className="px-4 py-3">
@@ -509,7 +610,7 @@ export default function Dashboard() {
                           <td className="px-4 py-3 text-slate-400">{transaction.note || "-"}</td>
                         </tr>
                       ))}
-                      {!selectedCustomer.transactions.length ? (
+                      {!(selectedCustomer.ledgers || []).length ? (
                         <tr>
                           <td className="px-4 py-5 text-center text-slate-400" colSpan="4">
                             Transaction မရှိသေးပါ။
@@ -526,6 +627,139 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="grid gap-2 sm:grid-cols-3">
+            {[
+              ["sales", "လက်လီ/လက်ကား အဝင်ဖောင်"],
+              ["kpay", "KPay Auto-Suggestion"],
+              ["reports", "စက်ရုံချုပ် စာရင်းချုပ်"],
+            ].map(([id, label]) => (
+              <button
+                key={id}
+                className={`min-h-12 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                  activeTab === id
+                    ? "border-cyan-400 bg-cyan-400/10 text-cyan-100"
+                    : "border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-600"
+                }`}
+                onClick={() => setActiveTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "sales" ? (
+            <form className="mt-4 grid gap-3 lg:grid-cols-4" onSubmit={createSalesLedger}>
+              <select
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                value={ledgerForm.saleType}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, saleType: event.target.value })}
+              >
+                <option value="RETAIL">လက်လီ</option>
+                <option value="WHOLESALE">လက်ကား</option>
+              </select>
+              <select
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                value={ledgerForm.itemSize}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, itemSize: event.target.value })}
+              >
+                <option value="">ပစ္စည်း Size</option>
+                <option value=".5">.5</option>
+                <option value=".85">.85</option>
+                <option value="1L">1L</option>
+                <option value="20L">20L</option>
+              </select>
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                placeholder="ကတ် အရေအတွက်"
+                inputMode="numeric"
+                value={ledgerForm.cartons}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, cartons: event.target.value })}
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                placeholder="တစ်ကတ်နှုန်း"
+                inputMode="numeric"
+                value={ledgerForm.rate}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, rate: event.target.value })}
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                placeholder="Tube/ကား/အိတ် စရိတ်"
+                inputMode="numeric"
+                value={ledgerForm.deductions}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, deductions: event.target.value })}
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                placeholder="မှတ်ချက်"
+                value={ledgerForm.note}
+                onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
+              />
+              <div className="rounded-md border border-slate-800 px-4 py-3">
+                <p className="text-xs text-slate-400">အသားတင် အကြွေးတိုး</p>
+                <p className="mt-1 text-lg font-semibold text-cyan-200">{formatMoney(computedSaleAmount)}</p>
+              </div>
+              <button className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300">
+                Save Sale
+              </button>
+            </form>
+          ) : null}
+
+          {activeTab === "kpay" ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {pendingKpay.map((item) => (
+                <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-white">{formatMoney(item.amount)}</p>
+                      <p className="mt-1 text-sm text-slate-400">{item.kpayName || "Unknown KPay name"}</p>
+                    </div>
+                    <span className="rounded-md bg-amber-400/10 px-2 py-1 text-xs text-amber-200">PENDING</span>
+                  </div>
+                  {item.suggestedCustomer ? (
+                    <p className="mt-3 rounded-md border border-cyan-500/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+                      {item.suggestedCustomer.name} နှင့် တွဲရန် အကြံပြုထားပါသည်
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+              {!pendingKpay.length ? (
+                <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">Pending KPay မရှိပါ။</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {activeTab === "reports" ? (
+            <div className="mt-4">
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                type="date"
+                value={reportDate}
+                onChange={(event) => setReportDate(event.target.value)}
+              />
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-md border border-slate-800 p-4">
+                  <p className="text-sm text-slate-400">လက်လီ</p>
+                  <p className="mt-1 text-xl font-semibold text-white">{formatMoney(report?.totals?.retail || 0)}</p>
+                </div>
+                <div className="rounded-md border border-slate-800 p-4">
+                  <p className="text-sm text-slate-400">လက်ကား</p>
+                  <p className="mt-1 text-xl font-semibold text-white">{formatMoney(report?.totals?.wholesale || 0)}</p>
+                </div>
+                <div className="rounded-md border border-slate-800 p-4">
+                  <p className="text-sm text-slate-400">ကုန်ကျစရိတ်</p>
+                  <p className="mt-1 text-xl font-semibold text-rose-200">{formatMoney(report?.totals?.deductions || 0)}</p>
+                </div>
+                <div className="rounded-md border border-cyan-500/30 p-4">
+                  <p className="text-sm text-slate-400">အသားတင်</p>
+                  <p className="mt-1 text-xl font-semibold text-cyan-200">{formatMoney(report?.totals?.netSales || 0)}</p>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </section>
       </div>
 
@@ -550,6 +784,12 @@ export default function Dashboard() {
                 placeholder="ဖုန်း"
                 value={editForm.phone}
                 onChange={(event) => setEditForm({ ...editForm, phone: event.target.value })}
+              />
+              <input
+                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400"
+                placeholder="ကား/နယ်မြေ (YM, WB)"
+                value={editForm.routeTag}
+                onChange={(event) => setEditForm({ ...editForm, routeTag: event.target.value })}
               />
             </div>
             <div className="mt-5 flex justify-end gap-2">

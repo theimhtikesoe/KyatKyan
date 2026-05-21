@@ -33,3 +33,19 @@ export function extractKpayAmount(text = "") {
 export function buildKpayRawText(title = "", text = "") {
   return [title, text].filter(Boolean).join("\n").trim();
 }
+
+export function extractKpayName(title = "", text = "") {
+  const normalizedTitle = String(title || "").trim();
+  const normalizedText = String(text || "").trim();
+
+  if (normalizedTitle && !/^kpay$/i.test(normalizedTitle)) {
+    return normalizedTitle.slice(0, 80);
+  }
+
+  const beforeAmount = normalizedText
+    .split(/[0-9၀-၉]/)[0]
+    ?.replace(/from|received|ငွေ|ဝင်|ကျပ်/gi, "")
+    .trim();
+
+  return beforeAmount ? beforeAmount.slice(0, 80) : null;
+}
