@@ -819,8 +819,6 @@ export default function Dashboard() {
               </div>
             </div>
           )}
-            </div>
-          )}
 
           <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:p-5 min-h-[500px]">
             {loadingCustomer ? (
