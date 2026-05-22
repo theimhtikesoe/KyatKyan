@@ -1,4 +1,5 @@
 import "./globals.css";
+import RootLayoutClient from "./layout-client";
 
 export const metadata = {
   title: "New Life Ledger",
@@ -41,7 +42,7 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-config" content="/browserconfig.xml" />
       </head>
       <body>
-        {children}
+        <RootLayoutClient>{children}</RootLayoutClient>
         <ServiceWorkerRegister />
       </body>
     </html>
