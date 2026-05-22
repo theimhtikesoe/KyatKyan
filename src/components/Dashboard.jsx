@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import KPISummaryDashboard from "./KPISummaryDashboard";
 
 
 const money = new Intl.NumberFormat("en-US");
@@ -584,6 +585,8 @@ export default function Dashboard() {
             </p>
           ) : null}
         </header>
+
+        <KPISummaryDashboard />
 
         <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4">
           <button
