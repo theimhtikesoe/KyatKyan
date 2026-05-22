@@ -616,24 +616,24 @@ export default function Dashboard() {
   }, [selectedCustomer]);
 
   return (
-    <main className="min-h-screen bg-slate-950">
+    <main className="min-h-screen bg-white">
       {alert && (
         <AlertNotification message={alert.message} type={alert.type} onClose={hideAlert} />
       )}
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
-        <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
+        <header className="rounded-lg border border-slate-200 bg-white px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-cyan-300">New Life Ledger Dashboard</p>
-              <h1 className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
+              <p className="text-sm text-cyan-600">New Life Ledger Dashboard</p>
+              <h1 className="mt-1 text-2xl font-semibold text-slate-900 sm:text-3xl">
                 Customer ငွေရှင်းတမ်း/အကြွေးရှင်းတမ်း
               </h1>
             </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowRecycleBin(true)}
-                className="flex items-center gap-2 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900 transition-colors"
+                className="flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 🗑️ Recycle Bin
               </button>
@@ -648,16 +648,16 @@ export default function Dashboard() {
 
         {/* <KPISummaryDashboard /> */}
 
-        <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4">
+        <section className="rounded-lg border border-cyan-500/30 bg-white p-4">
           <button
             className="flex min-h-12 w-full items-center justify-between gap-3 text-left"
             onClick={() => setShowAddCustomer((value) => !value)}
           >
             <div>
-              <h2 className="text-base font-semibold text-white">Customer အသစ်ထည့်ရန်</h2>
-              <p className="mt-1 text-sm text-slate-400">ဖုန်းမှ အမြန်စာရင်းသွင်းရန်</p>
+              <h2 className="text-base font-semibold text-slate-900">Customer အသစ်ထည့်ရန်</h2>
+              <p className="mt-1 text-sm text-slate-600">ဖုန်းမှ အမြန်စာရင်းသွင်းရန်</p>
             </div>
-            <span className="rounded-md border border-slate-700 px-3 py-2 text-sm text-cyan-200">
+            <span className="rounded-md border border-slate-300 px-3 py-2 text-sm text-cyan-700">
               {showAddCustomer ? "Hide" : "Add"}
             </span>
           </button>
@@ -665,7 +665,7 @@ export default function Dashboard() {
           {showAddCustomer ? (
             <form className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4" onSubmit={createCustomer}>
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none focus:border-cyan-400"
                 placeholder="အမည်"
                 value={newCustomer.name}
                 onChange={(event) => setNewCustomer({ ...newCustomer, name: event.target.value })}
@@ -673,7 +673,7 @@ export default function Dashboard() {
                 disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none focus:border-cyan-400"
                 inputMode="tel"
                 placeholder="ဖုန်းနံပါတ်"
                 value={newCustomer.phone}
@@ -681,7 +681,7 @@ export default function Dashboard() {
                 disabled={isSubmitting}
               />
               <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                className="min-h-12 rounded-md border border-slate-300 bg-slate-50 px-4 py-3 text-base text-slate-900 outline-none focus:border-cyan-400"
                 inputMode="numeric"
                 placeholder="အစ လက်ကျန်အကြွေး"
                 value={newCustomer.current_balance}
@@ -702,11 +702,11 @@ export default function Dashboard() {
 
 
 
-        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+        <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
           <div className="mb-4">
             <input
               type="text"
-              className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+              className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
               placeholder="Customer ရှာဖွေရန် (အမည် သို့မဟုတ် ဖုန်းနံပါတ်)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -714,7 +714,7 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2">
             {loading ? (
-              <div className="col-span-full rounded-lg border border-slate-800 p-4 text-center text-slate-400">
+              <div className="col-span-full rounded-lg border border-slate-200 p-4 text-center text-slate-600">
                 <div className="flex items-center justify-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-cyan-400"></div>
                   <span>Customer များ ရှာဖွေနေသည်...</span>
@@ -727,20 +727,20 @@ export default function Dashboard() {
                   className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 shadow-sm ${
                     selectedCustomerId === customer.id
                       ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
-                      : "border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-900/60"
+                      : "border-slate-200 bg-slate-50/40 hover:border-slate-300 hover:bg-slate-50/60"
                   }`}
                   onClick={() => setSelectedCustomerId(customer.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-bold text-white text-sm hover:text-cyan-400 transition-colors">{customer.name}</h3>
+                      <h3 className="font-bold text-slate-900 text-sm hover:text-cyan-600 transition-colors">{customer.name}</h3>
                       <p className="text-[11px] text-slate-500">
                         {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No contact"}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-2.5 pt-2.5 border-t border-slate-800/50 flex items-center justify-between">
-                    <p className="text-xs text-slate-400">Balance</p>
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-200/50 flex items-center justify-between">
+                    <p className="text-xs text-slate-600">Balance</p>
                     <p
                       className={`text-sm font-semibold ${
                         customer.current_balance > 0 ? "text-rose-200" : "text-emerald-200"
@@ -751,7 +751,7 @@ export default function Dashboard() {
                   </div>
                   <div className="mt-3 flex gap-2">
                     <button
-                      className="flex-1 rounded-md px-2 py-1 text-xs font-medium text-cyan-300 hover:bg-cyan-950/60"
+                      className="flex-1 rounded-md px-2 py-1 text-xs font-medium text-cyan-600 hover:bg-cyan-950/60"
                       onClick={(e) => {
                         e.stopPropagation();
                         openEditCustomer(customer);
@@ -774,7 +774,7 @@ export default function Dashboard() {
                 </div>
               ))
             ) : (
-              <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
+              <p className="rounded-lg border border-slate-200 p-4 text-sm text-slate-600">
                 Customer မရှိသေးပါ။
               </p>
             )}
@@ -782,12 +782,12 @@ export default function Dashboard() {
 
           {customers.length > 0 && totalPages > 1 && (
             <div className="mt-4 flex items-center justify-between gap-2">
-              <div className="text-sm text-slate-400">
-                <span className="font-medium text-slate-300">{customers.length}</span> customers - Page <span className="font-medium text-slate-300">{currentPage}</span> of <span className="font-medium text-slate-300">{totalPages}</span>
+              <div className="text-sm text-slate-600">
+                <span className="font-medium text-slate-700">{customers.length}</span> customers - Page <span className="font-medium text-slate-700">{currentPage}</span> of <span className="font-medium text-slate-700">{totalPages}</span>
               </div>
               <div className="flex gap-2">
                 <button
-                  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-cyan-400 hover:text-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:border-cyan-400 hover:text-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
@@ -800,7 +800,7 @@ export default function Dashboard() {
                       className={`min-w-10 rounded-md px-2 py-2 text-sm font-medium ${
                         currentPage === page
                           ? "bg-cyan-400 text-slate-950"
-                          : "border border-slate-700 text-slate-300 hover:border-cyan-400 hover:text-cyan-300"
+                          : "border border-slate-300 text-slate-700 hover:border-cyan-400 hover:text-cyan-600"
                       }`}
                       onClick={() => setCurrentPage(page)}
                     >
@@ -809,7 +809,7 @@ export default function Dashboard() {
                   ))}
                 </div>
                 <button
-                  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-cyan-400 hover:text-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:border-cyan-400 hover:text-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
@@ -819,28 +819,28 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5 min-h-[500px]">
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:p-5 min-h-[500px]">
             {loadingCustomer ? (
-              <div className="flex min-h-[460px] items-center justify-center rounded-lg border border-dashed border-slate-700">
+              <div className="flex min-h-[460px] items-center justify-center rounded-lg border border-dashed border-slate-300">
                 <div className="text-center">
                   <div className="flex justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-3 border-slate-600 border-t-cyan-400"></div>
                   </div>
-                  <p className="mt-4 text-slate-400">Customer အချက်အလက် ရယူနေသည်...</p>
+                  <p className="mt-4 text-slate-600">Customer အချက်အလက် ရယူနေသည်...</p>
                 </div>
               </div>
             ) : selectedCustomer ? (
               <>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <h2 className="text-xl font-semibold text-white">{selectedCustomer.name}</h2>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <h2 className="text-xl font-semibold text-slate-900">{selectedCustomer.name}</h2>
+                    <p className="mt-1 text-sm text-slate-600">
                       {[selectedCustomer.phone, selectedCustomer.routeTag].filter(Boolean).join(" / ") ||
                         "No phone"}
                     </p>
                     <div className="mt-3 flex gap-2">
                       <button
-                        className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+                        className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-slate-900 hover:bg-emerald-500"
                         onClick={exportToCSV}
                       >
                         Export to CSV
@@ -848,10 +848,10 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-400">လက်ကျန်အကြွေး</p>
+                    <p className="text-sm text-slate-600">လက်ကျန်အကြွေး</p>
                     <p
                       className={`text-2xl font-bold sm:text-3xl ${
-                        selectedCustomer.current_balance > 0 ? "text-rose-400" : "text-emerald-400"
+                        selectedCustomer.current_balance > 0 ? "text-rose-700" : "text-emerald-700"
                       }`}
                     >
                       {formatMoney(selectedCustomer.current_balance)}
@@ -860,16 +860,16 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-2 items-start">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-6 shadow-sm h-full min-h-[400px]">
-                    <h3 className="text-lg font-semibold text-white">စာရင်းအသစ်သွင်းရန်</h3>
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/30 p-6 shadow-sm h-full min-h-[400px]">
+                    <h3 className="text-lg font-semibold text-slate-900">စာရင်းအသစ်သွင်းရန်</h3>
                     <form className="mt-4 space-y-4" onSubmit={createLedgerTransaction}>
-                      <div className="flex p-1 bg-slate-900/80 rounded-xl border border-slate-800 mb-4 shadow-inner">
+                      <div className="flex p-1 bg-slate-50/80 rounded-xl border border-slate-200 mb-4 shadow-inner">
                         <button
                           type="button"
                           className={`flex-1 py-2.5 text-sm font-semibold rounded-md transition-all ${
                             ledgerForm.type === "CREDIT"
-                              ? "bg-rose-600 text-white shadow-lg"
-                              : "text-slate-400 hover:text-slate-200"
+                              ? "bg-rose-600 text-slate-900 shadow-lg"
+                              : "text-slate-600 hover:text-slate-200"
                           }`}
                           onClick={() => setLedgerForm({ ...ledgerForm, type: "CREDIT" })}
                           disabled={isSubmitting}
@@ -880,8 +880,8 @@ export default function Dashboard() {
                           type="button"
                           className={`flex-1 py-2.5 text-sm font-semibold rounded-md transition-all ${
                             ledgerForm.type === "DEBIT"
-                              ? "bg-emerald-600 text-white shadow-lg"
-                              : "text-slate-400 hover:text-slate-200"
+                              ? "bg-emerald-600 text-slate-900 shadow-lg"
+                              : "text-slate-600 hover:text-slate-200"
                           }`}
                           onClick={() => setLedgerForm({ ...ledgerForm, type: "DEBIT" })}
                           disabled={isSubmitting}
@@ -896,7 +896,7 @@ export default function Dashboard() {
                           <div className="relative">
                             <input
                               type="date"
-                              className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all appearance-none"
+                              className="w-full h-12 rounded-lg border border-slate-300 bg-slate-50/50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all appearance-none"
                               style={{ colorScheme: 'dark' }}
                               value={ledgerForm.date}
                               onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })}
@@ -908,7 +908,7 @@ export default function Dashboard() {
                           <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ပမာဏ (Ks)</label>
                           <input
                             type="number"
-                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                            className="w-full h-12 rounded-lg border border-slate-300 bg-slate-50/50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                             placeholder="0"
                             value={ledgerForm.amount}
                             onChange={(e) => setLedgerForm({ ...ledgerForm, amount: e.target.value })}
@@ -920,9 +920,9 @@ export default function Dashboard() {
 
                       {ledgerForm.type === "DEBIT" && (
                         <div className="space-y-1">
-                          <label className="text-xs text-slate-400">ငွေပေးချေမှုပုံစံ</label>
+                          <label className="text-xs text-slate-600">ငွေပေးချေမှုပုံစံ</label>
                           <select
-                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                            className="w-full h-12 rounded-lg border border-slate-300 bg-slate-50/50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                             value={ledgerForm.paymentType}
                             onChange={(e) => setLedgerForm({ ...ledgerForm, paymentType: e.target.value })}
                             disabled={isSubmitting}
@@ -937,7 +937,7 @@ export default function Dashboard() {
                       )}
 
                       <textarea
-                        className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                        className="w-full rounded-lg border border-slate-300 bg-slate-50/50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                         placeholder="မှတ်စု (Note)"
                         rows="2"
                         value={ledgerForm.note}
@@ -957,7 +957,7 @@ export default function Dashboard() {
 
                 <div className="mt-8">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">စာရင်းမှတ်တမ်း (Transactions)</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">စာရင်းမှတ်တမ်း (Transactions)</h3>
                   </div>
                   
                   <TransactionFilter 
@@ -965,9 +965,9 @@ export default function Dashboard() {
                     onFilterChange={handleFilterChange}
                   />
 
-                  <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
-                    <table className="w-full text-left text-sm text-slate-300">
-                      <thead className="bg-slate-900 text-xs uppercase text-slate-400">
+                  <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full text-left text-sm text-slate-700">
+                      <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                         <tr>
                           <th className="px-4 py-3">Date</th>
                           <th className="px-4 py-3">Type</th>
@@ -976,10 +976,10 @@ export default function Dashboard() {
                           <th className="px-4 py-3">Note</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800 bg-slate-950">
+                      <tbody className="divide-y divide-slate-800 bg-white">
                         {filteredLedgers.length ? (
                           filteredLedgers.map((ledger) => (
-                            <tr key={ledger.id} className="hover:bg-slate-900/50">
+                            <tr key={ledger.id} className="hover:bg-slate-50/50">
                               <td className="whitespace-nowrap px-4 py-3 text-xs">
                                 {formatDate(ledger.date)}
                               </td>
@@ -987,8 +987,8 @@ export default function Dashboard() {
                                 <span
                                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                                     ledger.type === "CREDIT"
-                                      ? "bg-rose-500/10 text-rose-400"
-                                      : "bg-emerald-500/10 text-emerald-400"
+                                      ? "bg-rose-100 text-rose-700"
+                                      : "bg-emerald-100 text-emerald-700"
                                   }`}
                                 >
                                   {ledger.type === "CREDIT" ? "အကြွေးတိုး" : "ငွေချေ"}
@@ -1001,10 +1001,10 @@ export default function Dashboard() {
                               >
                                 {formatMoney(ledger.amount)}
                               </td>
-                              <td className="px-4 py-3 text-xs text-slate-400">
+                              <td className="px-4 py-3 text-xs text-slate-600">
                                 {ledger.paymentType || "-"}
                               </td>
-                              <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">
+                              <td className="px-4 py-3 text-xs text-slate-600 max-w-[200px] truncate">
                                 {ledger.note || "-"}
                               </td>
                             </tr>
@@ -1022,7 +1022,7 @@ export default function Dashboard() {
                 </div>
               </>
             ) : (
-              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-800 bg-slate-950/50">
+              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-white/50">
                 <div className="text-center">
                   <p className="text-lg font-medium text-slate-500">Customer တစ်ယောက်ကို ရွေးချယ်ပါ</p>
                   <p className="mt-1 text-sm text-slate-600">အချက်အလက်များ ကြည့်ရှုရန်နှင့် စာရင်းသွင်းရန်</p>
@@ -1035,13 +1035,13 @@ export default function Dashboard() {
 
       {/* Recycle Bin Modal */}
       {showRecycleBin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 p-4 sm:p-5">
-              <h3 className="text-xl font-semibold text-white">🗑️ Recycle Bin (ဖျက်ထားသော Customer များ)</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-200 p-4 sm:p-5">
+              <h3 className="text-xl font-semibold text-slate-900">🗑️ Recycle Bin (ဖျက်ထားသော Customer များ)</h3>
               <button
                 onClick={() => setShowRecycleBin(false)}
-                className="rounded-full p-2 text-slate-400 hover:bg-slate-900 hover:text-white"
+                className="rounded-full p-2 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               >
                 ✕
               </button>
@@ -1054,11 +1054,11 @@ export default function Dashboard() {
               ) : deletedCustomers.length ? (
                 <div className="grid gap-3 sm:grid-cols-2">
                   {deletedCustomers.map((customer) => (
-                    <div key={customer.id} className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                    <div key={customer.id} className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold text-white">{customer.name}</h4>
-                          <p className="text-xs text-slate-400">{customer.phone || "No phone"}</p>
+                          <h4 className="font-semibold text-slate-900">{customer.name}</h4>
+                          <p className="text-xs text-slate-600">{customer.phone || "No phone"}</p>
                           <p className="mt-2 text-xs text-rose-300">
                             Deleted on: {formatDate(customer.deletedAt)}
                           </p>
@@ -1066,14 +1066,14 @@ export default function Dashboard() {
                         <div className="flex flex-col gap-2">
                           <button
                             onClick={() => restoreCustomer(customer)}
-                            className="rounded-md bg-emerald-600/20 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/30"
+                            className="rounded-md bg-emerald-600/20 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-600/30"
                             disabled={isSubmitting}
                           >
                             Restore
                           </button>
                           <button
                             onClick={() => setPermanentDeletingCustomer(customer)}
-                            className="rounded-md bg-rose-600/20 px-3 py-1.5 text-xs font-medium text-rose-400 hover:bg-rose-600/30"
+                            className="rounded-md bg-rose-600/20 px-3 py-1.5 text-xs font-medium text-rose-700 hover:bg-rose-600/30"
                             disabled={isSubmitting}
                           >
                             Delete Forever
@@ -1089,10 +1089,10 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            <div className="border-t border-slate-800 p-4 text-right">
+            <div className="border-t border-slate-200 p-4 text-right">
               <button
                 onClick={() => setShowRecycleBin(false)}
-                className="rounded-md bg-slate-800 px-5 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                className="rounded-md bg-slate-200 px-5 py-2 text-sm font-medium text-slate-900 hover:bg-slate-200"
               >
                 Close
               </button>
@@ -1103,14 +1103,14 @@ export default function Dashboard() {
 
       {/* Edit Customer Modal */}
       {editingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
-            <h3 className="text-xl font-semibold text-white">Edit Customer</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-slate-900">Edit Customer</h3>
             <form className="mt-6 space-y-4" onSubmit={updateCustomer}>
               <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-medium">Customer Name</label>
+                <label className="text-xs text-slate-600 font-medium">Customer Name</label>
                 <input
-                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+                  className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   required
@@ -1118,18 +1118,18 @@ export default function Dashboard() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-medium">Phone Number</label>
+                <label className="text-xs text-slate-600 font-medium">Phone Number</label>
                 <input
-                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+                  className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   disabled={isSubmitting}
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-slate-400 font-medium">Route / Tag</label>
+                <label className="text-xs text-slate-600 font-medium">Route / Tag</label>
                 <input
-                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+                  className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.routeTag}
                   onChange={(e) => setEditForm({ ...editForm, routeTag: e.target.value })}
                   disabled={isSubmitting}
@@ -1138,7 +1138,7 @@ export default function Dashboard() {
               <div className="mt-6 flex gap-3">
                 <button
                   type="button"
-                  className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                  className="flex-1 rounded-md bg-slate-200 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-200"
                   onClick={() => setEditingCustomer(null)}
                   disabled={isSubmitting}
                 >
@@ -1158,25 +1158,25 @@ export default function Dashboard() {
 
       {/* Soft Delete Confirmation Modal */}
       {deletingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-500">
               🗑️
             </div>
-            <h3 className="mt-4 text-xl font-semibold text-white">Delete Customer?</h3>
-            <p className="mt-2 text-slate-400">
+            <h3 className="mt-4 text-xl font-semibold text-slate-900">Delete Customer?</h3>
+            <p className="mt-2 text-slate-600">
               &quot;{deletingCustomer.name}&quot; ကို ဖျက်ရန် သေချာပါသလား? ဖျက်လိုက်သော Customer များကို Recycle Bin ထဲတွင် ပြန်လည်ရှာဖွေနိုင်ပါသည်။
             </p>
             <div className="mt-6 flex gap-3">
               <button
-                className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                className="flex-1 rounded-md bg-slate-200 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-200"
                 onClick={() => setDeletingCustomer(null)}
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
-                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-slate-900 hover:bg-rose-500 disabled:opacity-50"
                 onClick={deleteCustomer}
                 disabled={isSubmitting}
               >
@@ -1189,25 +1189,25 @@ export default function Dashboard() {
 
       {/* Permanent Delete Confirmation Modal */}
       {permanentDeletingCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-xl border border-rose-900/50 bg-slate-950 p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-rose-900/50 bg-white p-6 shadow-2xl">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/20 text-rose-500">
               ⚠️
             </div>
-            <h3 className="mt-4 text-xl font-semibold text-white">Permanent Delete?</h3>
-            <p className="mt-2 text-slate-400">
+            <h3 className="mt-4 text-xl font-semibold text-slate-900">Permanent Delete?</h3>
+            <p className="mt-2 text-slate-600">
               &quot;{permanentDeletingCustomer.name}&quot; ကို အပြီးတိုင်ဖျက်ရန် သေချာပါသလား? ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍မရပါ။ စာရင်းဇယားများအားလုံး ပျက်သွားပါလိမ့်မည်။
             </p>
             <div className="mt-6 flex gap-3">
               <button
-                className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                className="flex-1 rounded-md bg-slate-200 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-200"
                 onClick={() => setPermanentDeletingCustomer(null)}
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
-                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-slate-900 hover:bg-rose-500 disabled:opacity-50"
                 onClick={permanentDeleteCustomer}
                 disabled={isSubmitting}
               >

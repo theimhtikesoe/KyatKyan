@@ -3,13 +3,13 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  background: #080a0f;
-  color: #f8fafc;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 button,
