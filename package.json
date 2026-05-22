@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build:ci": "prisma generate && next build",
+    "build": "DATABASE_URL=${DATABASE_URL:-'postgresql://dummy:dummy@localhost:5432/dummy'} DIRECT_URL=${DIRECT_URL:-$DATABASE_URL} prisma generate && if [ -z \"$DATABASE_URL\" ]; then echo 'Skipping prisma migrate deploy - DATABASE_URL not set'; else prisma migrate deploy; fi && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma:generate": "prisma generate",
