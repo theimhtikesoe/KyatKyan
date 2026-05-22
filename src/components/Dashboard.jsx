@@ -68,6 +68,8 @@ export default function Dashboard() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [deletingCustomer, setDeletingCustomer] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", routeTag: "" });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(12);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     phone: "",
@@ -170,6 +172,20 @@ export default function Dashboard() {
     [pendingKpay],
   );
 
+  // Pagination logic
+  const paginatedCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return customers.slice(startIndex, endIndex);
+  }, [customers, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
   async function createCustomer(event) {
     event.preventDefault();
     if (isSubmitting) return;
@@ -235,6 +251,7 @@ export default function Dashboard() {
           deductions: Number(ledgerForm.deductions || 0),
           amount: Number(ledgerForm.amount),
           note: ledgerForm.note,
+          paymentType: ledgerForm.paymentType || null,
         }),
       });
       
@@ -256,6 +273,7 @@ export default function Dashboard() {
         deductions: "",
         amount: "",
         note: "",
+        paymentType: "",
       });
       
       showAlert("Transaction အောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");
@@ -477,28 +495,23 @@ export default function Dashboard() {
   }, [reportDate, showAlert]);
 
   useEffect(() => {
-    if (showExtraTools) {
-      loadReport(reportDate);
-    }
-  }, [reportDate, showExtraTools, loadReport]);
+    loadReport();
+  }, [loadReport]);
 
-  const computedSaleAmount = Math.max(
-    0,
-    Math.round(Number(ledgerForm.cartons || 0) * Number(ledgerForm.rate || 0)) -
-      Math.round(Number(ledgerForm.deductions || 0)),
-  );
+  const computedSaleAmount = useMemo(() => {
+    if (ledgerForm.type !== "CREDIT" || ledgerForm.saleType !== "RETAIL") return null;
+    const cartons = Number(ledgerForm.cartons || 0);
+    const rate = Number(ledgerForm.rate || 0);
+    const deductions = Number(ledgerForm.deductions || 0);
+    if (!cartons || !rate) return null;
+    return cartons * rate - deductions;
+  }, [ledgerForm.cartons, ledgerForm.rate, ledgerForm.deductions, ledgerForm.type, ledgerForm.saleType]);
 
   return (
-    <main className="min-h-screen bg-[#080a0f] text-slate-100">
+    <main className="min-h-screen bg-slate-950">
       {alert && (
-        <AlertNotification
-          message={alert.message}
-          type={alert.type}
-          onClose={hideAlert}
-        />
+        <AlertNotification message={alert.message} type={alert.type} onClose={hideAlert} />
       )}
-      
-
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-3 sm:gap-6 sm:px-6 sm:py-6 lg:px-8">
         <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
@@ -590,7 +603,7 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : customers.length ? (
-              customers.map((customer) => (
+              paginatedCustomers.map((customer) => (
                 <div
                   key={customer.id}
                   className={`cursor-pointer rounded-lg border p-4 transition ${
@@ -648,6 +661,45 @@ export default function Dashboard() {
               </p>
             )}
           </div>
+
+          {customers.length > 0 && totalPages > 1 && (
+            <div className="mt-4 flex items-center justify-between gap-2">
+              <div className="text-sm text-slate-400">
+                <span className="font-medium text-slate-300">{customers.length}</span> customers - Page <span className="font-medium text-slate-300">{currentPage}</span> of <span className="font-medium text-slate-300">{totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-cyan-400 hover:text-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      className={`min-w-10 rounded-md px-2 py-2 text-sm font-medium ${
+                        currentPage === page
+                          ? "bg-cyan-400 text-slate-950"
+                          : "border border-slate-700 text-slate-300 hover:border-cyan-400 hover:text-cyan-300"
+                      }`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-300 hover:border-cyan-400 hover:text-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
             {loadingCustomer ? (
@@ -759,13 +811,14 @@ export default function Dashboard() {
                 </form>
 
                 <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
-                  <table className="w-full min-w-[620px] border-collapse text-sm">
+                  <table className="w-full min-w-[720px] border-collapse text-sm">
                     <thead className="bg-slate-900 text-left text-slate-300">
                       <tr>
                         <th className="px-4 py-3 font-medium">Date</th>
                         <th className="px-4 py-3 font-medium">Type</th>
                         <th className="px-4 py-3 text-right font-medium">Amount</th>
-                        <th className="px-4 py-3 font-medium">Payment/Note</th>
+                        <th className="px-4 py-3 font-medium">Payment Type</th>
+                        <th className="px-4 py-3 font-medium">Note</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
@@ -791,20 +844,22 @@ export default function Dashboard() {
                             {formatMoney(transaction.amount)}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-col gap-0.5">
-                              {transaction.paymentType && (
-                                <span className="text-[10px] font-medium text-cyan-300">
-                                  [{transaction.paymentType}]
-                                </span>
-                              )}
-                              <span className="text-slate-400">{transaction.note || "-"}</span>
-                            </div>
+                            {transaction.paymentType ? (
+                              <span className="inline-block rounded-full bg-cyan-400/10 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
+                                {transaction.paymentType}
+                              </span>
+                            ) : (
+                              <span className="text-slate-500">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-slate-400">
+                            {transaction.note || "-"}
                           </td>
                         </tr>
                       ))}
                       {!(selectedCustomer.ledgers || []).length ? (
                         <tr>
-                          <td className="px-4 py-5 text-center text-slate-400" colSpan="4">
+                          <td className="px-4 py-5 text-center text-slate-400" colSpan="5">
                             Transaction မရှိသေးပါ။
                           </td>
                         </tr>

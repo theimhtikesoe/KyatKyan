@@ -55,6 +55,7 @@ export async function POST(request) {
           saleType: body.saleType || "RETAIL",
           amount,
           deductions: 0,
+          paymentType: "KPay",
           note: `Matched KPay${kpayName ? `: ${kpayName}` : ""}`,
           date: kpay.createdAt,
         },
