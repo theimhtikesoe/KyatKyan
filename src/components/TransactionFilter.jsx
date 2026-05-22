@@ -7,41 +7,18 @@ import React, { useState, useMemo, useEffect } from "react";
  *
  * Provides robust client-side filtering for transactions with multiple predefined scopes
  * and custom date range selection. Optimized for performance with useMemo.
- *
- * Features:
- * - Quick filter buttons: All, Today, This Month
- * - Custom date range picker with inclusive end-of-day filtering
- * - Real-time filtered data computation
- * - Clean dark UI with Tailwind CSS
- * - Callback to parent component on filter changes
  */
-
-interface Transaction {
-  id: string;
-  date: string; // ISO String format or "YYYY-MM-DD"
-  type: string;
-  amount: number;
-  [key: string]: any; // Allow additional properties
-}
-
-interface TransactionFilterProps {
-  transactions?: Transaction[];
-  onFilterChange?: (filteredData: Transaction[]) => void;
-}
-
-type FilterType = "all" | "today" | "month" | "custom";
 
 export default function TransactionFilter({
   transactions = [],
   onFilterChange,
-}: TransactionFilterProps) {
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+}) {
+  const [filterType, setFilterType] = useState("all");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   /**
    * Filtering Logic wrapped in useMemo for optimal client-side performance
-   * Recalculates only when dependencies change
    */
   const filteredTransactions = useMemo(() => {
     return transactions.filter((t) => {
@@ -81,7 +58,6 @@ export default function TransactionFilter({
 
   /**
    * Trigger parent state update whenever filtered data changes
-   * This allows parent component to react to filter changes
    */
   useEffect(() => {
     if (onFilterChange) {
@@ -101,7 +77,7 @@ export default function TransactionFilter({
   /**
    * Handle quick filter button click
    */
-  const handleQuickFilter = (type: FilterType) => {
+  const handleQuickFilter = (type) => {
     setFilterType(type);
     // Clear custom date inputs when switching to quick filters
     if (type !== "custom") {
@@ -113,7 +89,7 @@ export default function TransactionFilter({
   /**
    * Handle start date change - automatically switch to custom filter
    */
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStartDateChange = (e) => {
     setFilterType("custom");
     setStartDate(e.target.value);
   };
@@ -121,7 +97,7 @@ export default function TransactionFilter({
   /**
    * Handle end date change - automatically switch to custom filter
    */
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEndDateChange = (e) => {
     setFilterType("custom");
     setEndDate(e.target.value);
   };
@@ -193,28 +169,6 @@ export default function TransactionFilter({
           >
             Reset
           </button>
-        )}
-      </div>
-
-      {/* Filter Summary */}
-      <div className="text-xs text-slate-400 flex items-center gap-2">
-        <span>
-          Showing{" "}
-          <span className="font-semibold text-slate-300">
-            {filteredTransactions.length}
-          </span>{" "}
-          of{" "}
-          <span className="font-semibold text-slate-300">
-            {transactions.length}
-          </span>{" "}
-          transactions
-        </span>
-        {filterType !== "all" && (
-          <span className="text-indigo-400">
-            ({filterType === "today" && "Today"}
-            {filterType === "month" && "This Month"}
-            {filterType === "custom" && "Custom Range"})
-          </span>
         )}
       </div>
     </div>

@@ -515,27 +515,23 @@ export default function Dashboard() {
       return;
     }
 
-    const headers = ["Date", "Type", "Amount", "Payment Type", "Note", "Sale Type", "Cartons", "Rate", "Deductions"];
+    const headers = ["Date", "Type", "Amount", "Payment Type", "Note"];
     const rows = selectedCustomer.ledgers.map(transaction => [
       formatDate(transaction.date),
       transaction.type === "CREDIT" ? "အကြွေးတိုး (Unpaid)" : "ငွေချေ (Paid)",
       transaction.amount,
       transaction.paymentType || "-",
       transaction.note || "-",
-      transaction.saleType || "-",
-      transaction.cartons || "-",
-      transaction.rate || "-",
-      transaction.deductions || 0,
     ]);
 
     // Create CSV content
     const csvContent = [
-      `Customer: ${selectedCustomer.name}`,
-      `Phone: ${selectedCustomer.phone || "-"}`,
-      `Route Tag: ${selectedCustomer.routeTag || "-"}`,
-      `Current Balance: ${formatMoney(selectedCustomer.current_balance)}`,
-      `Export Date: ${new Date().toLocaleString('en-GB')}`,
-      "",
+      `Customer: ${selectedCustomer.name},,,,`,
+      `Phone: ${selectedCustomer.phone || "-"},,,,`,
+      `Route Tag: ${selectedCustomer.routeTag || "-"},,,,`,
+      `Current Balance: ${formatMoney(selectedCustomer.current_balance)},,,,`,
+      `Export Date: ${new Date().toLocaleString('en-GB')},,,,`,
+      ",,,,",
       headers.join(","),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
     ].join("\n");
