@@ -88,11 +88,7 @@ export default function PINLogin({ onSuccess }) {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} New Life Ledger. အားလုံးအခွင့်အရေး ကျေးဇူးတင်ပါသည်။
-          </p>
-        </div>
+
       </div>
     </div>
   );
