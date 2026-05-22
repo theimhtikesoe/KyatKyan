@@ -94,7 +94,6 @@ export default function Dashboard() {
     paymentType: "",
   });
   const [showAddCustomer, setShowAddCustomer] = useState(true);
-  const [showExtraTools, setShowExtraTools] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
@@ -841,12 +840,6 @@ export default function Dashboard() {
                     </p>
                     <div className="mt-3 flex gap-2">
                       <button
-                        className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
-                        onClick={() => setShowExtraTools((v) => !v)}
-                      >
-                        {showExtraTools ? "Hide Tools" : "Show Extra Tools"}
-                      </button>
-                      <button
                         className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
                         onClick={exportToCSV}
                       >
@@ -952,79 +945,6 @@ export default function Dashboard() {
                         disabled={isSubmitting}
                       >
                         {isSubmitting ? "Saving..." : "Save Transaction"}
-                      </button>
-                    </form>
-                  </div>
-
-                  <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                    <h3 className="text-lg font-semibold text-white">အရောင်းစာရင်းသွင်းရန် (Sales)</h3>
-                    <form className="mt-4 space-y-4" onSubmit={createSalesLedger}>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">အမျိုးအစား</label>
-                          <select
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-                            value={ledgerForm.itemSize}
-                            onChange={(e) => setLedgerForm({ ...ledgerForm, itemSize: e.target.value })}
-                            disabled={isSubmitting}
-                          >
-                            <option value="">Select Size</option>
-                            <option value="1L">1 Liter</option>
-                            <option value="500ML">500 ML</option>
-                            <option value="330ML">330 ML</option>
-                            <option value="OTHER">Other</option>
-                          </select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">အရေအတွက် (ဖာ)</label>
-                          <input
-                            type="number"
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-                            placeholder="Cartons"
-                            value={ledgerForm.cartons}
-                            onChange={(e) => setLedgerForm({ ...ledgerForm, cartons: e.target.value })}
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">ဈေးနှုန်း (Ks)</label>
-                          <input
-                            type="number"
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-                            placeholder="Rate"
-                            value={ledgerForm.rate}
-                            onChange={(e) => setLedgerForm({ ...ledgerForm, rate: e.target.value })}
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">နုတ်ပမာဏ (Ks)</label>
-                          <input
-                            type="number"
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-                            placeholder="Deductions"
-                            value={ledgerForm.deductions}
-                            onChange={(e) => setLedgerForm({ ...ledgerForm, deductions: e.target.value })}
-                            disabled={isSubmitting}
-                          />
-                        </div>
-                      </div>
-
-                      {computedSaleAmount !== null && (
-                        <div className="rounded-md bg-cyan-950/40 p-3 text-center border border-cyan-900/50">
-                          <p className="text-xs text-cyan-300">စုစုပေါင်း ကျသင့်ငွေ</p>
-                          <p className="text-xl font-bold text-cyan-400">{formatMoney(computedSaleAmount)}</p>
-                        </div>
-                      )}
-
-                      <button 
-                        className="w-full min-h-12 rounded-md bg-indigo-500 py-3 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? "Saving..." : "Save Sales Entry"}
                       </button>
                     </form>
                   </div>
