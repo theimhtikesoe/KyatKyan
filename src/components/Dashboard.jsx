@@ -93,9 +93,6 @@ export default function Dashboard() {
     date: "",
     paymentType: "",
   });
-  const [activeTab, setActiveTab] = useState("kpay");
-  const [reportDate, setReportDate] = useState(today);
-  const [report, setReport] = useState(null);
   const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [showExtraTools, setShowExtraTools] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -553,20 +550,6 @@ export default function Dashboard() {
       setIsSubmitting(false);
     }
   }
-
-  const loadReport = useCallback(async (date = reportDate) => {
-    try {
-      const data = await api(`/api/reports?date=${encodeURIComponent(date)}`);
-      setReport(data);
-    } catch (error) {
-      setMessage(error.message);
-      showAlert(error.message, "error");
-    }
-  }, [reportDate, showAlert]);
-
-  useEffect(() => {
-    loadReport();
-  }, [loadReport]);
 
   // Export transaction data to CSV
   const exportToCSV = () => {
@@ -1122,41 +1105,6 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </section>
-
-        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Daily Report</h2>
-            <input
-              type="date"
-              className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-              value={reportDate}
-              onChange={(e) => setReportDate(e.target.value)}
-            />
-          </div>
-
-          {report ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                <p className="text-xs text-slate-400">Total Credit (အကြွေးတိုး)</p>
-                <p className="mt-1 text-xl font-bold text-rose-400">{formatMoney(report.totalCredit)}</p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                <p className="text-xs text-slate-400">Total Debit (ငွေချေ)</p>
-                <p className="mt-1 text-xl font-bold text-emerald-400">{formatMoney(report.totalDebit)}</p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                <p className="text-xs text-slate-400">Total Cash</p>
-                <p className="mt-1 text-xl font-bold text-cyan-400">{formatMoney(report.totalCash)}</p>
-              </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                <p className="text-xs text-slate-400">Total KPay</p>
-                <p className="mt-1 text-xl font-bold text-cyan-400">{formatMoney(report.totalKpay)}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">Report ရယူနေသည်...</p>
-          )}
         </section>
       </div>
 
