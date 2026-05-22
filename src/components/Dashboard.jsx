@@ -505,6 +505,54 @@ export default function Dashboard() {
     loadReport();
   }, [loadReport]);
 
+  // Export transaction data to CSV
+  const exportToCSV = () => {
+    if (!selectedCustomer || !selectedCustomer.ledgers || selectedCustomer.ledgers.length === 0) {
+      showAlert("ထုတ်ယူရန် transaction မရှိပါ။", "error");
+      return;
+    }
+
+    const headers = ["Date", "Type", "Amount", "Payment Type", "Note", "Sale Type", "Cartons", "Rate", "Deductions"];
+    const rows = selectedCustomer.ledgers.map(transaction => [
+      formatDate(transaction.date),
+      transaction.type === "CREDIT" ? "အကြွေးတိုး (Unpaid)" : "ငွေချေ (Paid)",
+      transaction.amount,
+      transaction.paymentType || "-",
+      transaction.note || "-",
+      transaction.saleType || "-",
+      transaction.cartons || "-",
+      transaction.rate || "-",
+      transaction.deductions || 0,
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      `Customer: ${selectedCustomer.name}`,
+      `Phone: ${selectedCustomer.phone || "-"}`,
+      `Route Tag: ${selectedCustomer.routeTag || "-"}`,
+      `Current Balance: ${formatMoney(selectedCustomer.current_balance)}`,
+      `Export Date: ${new Date().toLocaleString('en-GB')}`,
+      "",
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute("href", url);
+    link.setAttribute("download", `${selectedCustomer.name}_transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = "hidden";
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showAlert(`"${selectedCustomer.name}" ရဲ့ transaction တွေ အောင်မြင်စွာ ထုတ်ယူပြီးပါပြီ။`, "success");
+  };
+
   const computedSaleAmount = useMemo(() => {
     if (ledgerForm.type !== "CREDIT" || ledgerForm.saleType !== "RETAIL") return null;
     const cartons = Number(ledgerForm.cartons || 0);
@@ -734,6 +782,13 @@ export default function Dashboard() {
                         disabled={isSubmitting}
                       >
                         Edit
+                      </button>
+                      <button
+                        className="min-h-11 rounded-md border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-200 hover:border-emerald-400 hover:text-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={exportToCSV}
+                        disabled={isSubmitting || !selectedCustomer?.ledgers?.length}
+                      >
+                        Export CSV
                       </button>
                       <button
                         className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100 disabled:opacity-50 disabled:cursor-not-allowed"
