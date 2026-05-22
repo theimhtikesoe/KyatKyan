@@ -967,7 +967,7 @@ export default function Dashboard() {
 
                   <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
                     <table className="w-full text-left text-sm text-slate-700">
-                      <thead className="bg-slate-50 text-xs uppercase text-slate-600">
+                      <thead className="bg-slate-100 text-xs uppercase text-slate-700">
                         <tr>
                           <th className="px-4 py-3">Date</th>
                           <th className="px-4 py-3">Type</th>
@@ -976,7 +976,7 @@ export default function Dashboard() {
                           <th className="px-4 py-3">Note</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-800 bg-white">
+                      <tbody className="divide-y divide-slate-200 bg-white">
                         {filteredLedgers.length ? (
                           filteredLedgers.map((ledger) => (
                             <tr key={ledger.id} className="hover:bg-slate-50/50">
@@ -996,7 +996,7 @@ export default function Dashboard() {
                               </td>
                               <td
                                 className={`px-4 py-3 text-right font-medium ${
-                                  ledger.type === "CREDIT" ? "text-rose-200" : "text-emerald-200"
+                                  ledger.type === "CREDIT" ? "text-rose-600" : "text-emerald-600"
                                 }`}
                               >
                                 {formatMoney(ledger.amount)}

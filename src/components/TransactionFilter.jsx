@@ -115,7 +115,7 @@ export default function TransactionFilter({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-slate-900/50 border border-slate-800 rounded-xl w-full">
+    <div className="flex flex-col gap-4 p-4 bg-white border border-slate-200 rounded-xl w-full">
       {/* Quick Action Filter Tabs */}
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -123,7 +123,7 @@ export default function TransactionFilter({
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
             filterType === "all"
               ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              : "text-slate-700 hover:text-white hover:bg-slate-300"
           }`}
         >
           အားလုံး
@@ -133,7 +133,7 @@ export default function TransactionFilter({
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
             filterType === "today"
               ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              : "text-slate-700 hover:text-white hover:bg-slate-300"
           }`}
         >
           ဒီနေ့
@@ -143,7 +143,7 @@ export default function TransactionFilter({
           className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
             filterType === "month"
               ? "bg-indigo-600 text-white"
-              : "text-slate-400 hover:text-white hover:bg-slate-800"
+              : "text-slate-700 hover:text-white hover:bg-slate-300"
           }`}
         >
           ဒီလအတွက်ပဲ
@@ -153,22 +153,22 @@ export default function TransactionFilter({
       {/* Custom Date Range Selectors */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs text-slate-400 font-medium">
+          <label className="text-xs text-slate-700 font-medium">
             Custom Range:
           </label>
           <input
             type="date"
             value={startDate}
             onChange={handleStartDateChange}
-            className="flex-1 min-w-[130px] bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+            className="flex-1 min-w-[130px] bg-white border border-slate-300 text-sm text-slate-900 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
             placeholder="Start Date"
           />
-          <span className="text-slate-500 text-sm font-medium">မှ</span>
+          <span className="text-slate-700 text-sm font-medium">မှ</span>
           <input
             type="date"
             value={endDate}
             onChange={handleEndDateChange}
-            className="flex-1 min-w-[130px] bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+            className="flex-1 min-w-[130px] bg-white border border-slate-300 text-sm text-slate-900 rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
             placeholder="End Date"
           />
         </div>
