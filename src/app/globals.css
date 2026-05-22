@@ -2,6 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.4s ease-out;
+  }
+}
+
 :root {
   color-scheme: light;
 }
@@ -17,4 +49,13 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+/* Smooth transitions for customer list */
+.customer-list-container {
+  transition: all 0.3s ease-out;
+}
+
+.customer-card {
+  transition: all 0.2s ease-out;
 }

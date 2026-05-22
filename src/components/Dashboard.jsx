@@ -102,6 +102,7 @@ export default function Dashboard() {
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredLedgers, setFilteredLedgers] = useState([]);
+  const [highlightedCustomerId, setHighlightedCustomerId] = useState(null);
 
 
   // Show alert notification
@@ -715,14 +716,14 @@ export default function Dashboard() {
             {selectedCustomerId && (
               <button
                 onClick={() => setShowCustomerList(!showCustomerList)}
-                className="ml-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                className="ml-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap"
               >
-                {showCustomerList ? "Hide" : "Show"}
+                {showCustomerList ? "Hide List" : "Show List"}
               </button>
             )}
           </div>
           {showCustomerList && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 customer-list-container animate-slide-up">
             {loading ? (
               <div className="col-span-full rounded-lg border border-slate-200 p-4 text-center text-slate-600">
                 <div className="flex items-center justify-center gap-2">
@@ -734,12 +735,22 @@ export default function Dashboard() {
               paginatedCustomers.map((customer) => (
                 <div
                   key={`customer-${customer.id}`}
-                  className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 shadow-sm ${
-                    selectedCustomerId === customer.id
+                  className={`cursor-pointer rounded-xl border p-4 customer-card ${
+                    highlightedCustomerId === customer.id
+                      ? "border-cyan-500 bg-cyan-500/10 ring-2 ring-cyan-500/40 scale-105 shadow-lg"
+                      : selectedCustomerId === customer.id
                       ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
                       : "border-slate-200 bg-slate-50/40 hover:border-slate-300 hover:bg-slate-50/60"
                   }`}
-                  onClick={() => { setSelectedCustomerId(customer.id); setShowCustomerList(false); }}
+                  onClick={() => {
+                    setSelectedCustomerId(customer.id);
+                    setHighlightedCustomerId(customer.id);
+                    // Delay hiding the list to allow animation
+                    setTimeout(() => {
+                      setShowCustomerList(false);
+                      setHighlightedCustomerId(null);
+                    }, 400);
+                  }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
