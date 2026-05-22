@@ -7,15 +7,19 @@ const CORRECT_PIN = '126365';
 export default function PINLogin({ onSuccess }) {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is already authenticated
+  // Check if user is already authenticated on component mount
   useEffect(() => {
     const authenticated = localStorage.getItem('pinAuthenticated');
     if (authenticated === 'true') {
       setIsAuthenticated(true);
       onSuccess?.();
+    } else {
+      setIsAuthenticated(false);
     }
+    setIsLoading(false);
   }, [onSuccess]);
 
   const handlePinChange = (e) => {
@@ -46,6 +50,12 @@ export default function PINLogin({ onSuccess }) {
     setError('');
   };
 
+  // Don't render anything while loading
+  if (isLoading) {
+    return null;
+  }
+
+  // Don't render PIN login if authenticated
   if (isAuthenticated) {
     return null;
   }
