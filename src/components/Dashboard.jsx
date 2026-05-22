@@ -902,7 +902,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {(filteredLedgers.length > 0 ? filteredLedgers : selectedCustomer?.ledgers || []).map((transaction) => (
+                      {filteredLedgers.map((transaction) => (
                         <tr key={transaction.id} className="bg-slate-950">
                           <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
                           <td className="px-4 py-3">

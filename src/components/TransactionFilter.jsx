@@ -40,16 +40,27 @@ export default function TransactionFilter({
         );
       }
 
-      if (filterType === "custom" && startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        // Set to absolute end of the chosen day (23:59:59.999)
-        end.setHours(23, 59, 59, 999);
-        start.setHours(0, 0, 0, 0);
-
-        // Parse transaction date properly
+      if (filterType === "custom") {
         const txDate = new Date(t.date);
-        return txDate >= start && txDate <= end;
+        txDate.setHours(0, 0, 0, 0);
+
+        if (startDate && endDate) {
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(0, 0, 0, 0);
+          return txDate >= start && txDate <= end;
+        }
+        if (startDate) {
+          const start = new Date(startDate);
+          start.setHours(0, 0, 0, 0);
+          return txDate >= start;
+        }
+        if (endDate) {
+          const end = new Date(endDate);
+          end.setHours(0, 0, 0, 0);
+          return txDate <= end;
+        }
       }
 
       return true; // default 'all'
