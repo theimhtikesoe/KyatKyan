@@ -712,7 +712,7 @@ export default function Dashboard() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2">
             {loading ? (
               <div className="col-span-full rounded-lg border border-slate-800 p-4 text-center text-slate-400">
                 <div className="flex items-center justify-center gap-2">
@@ -723,7 +723,7 @@ export default function Dashboard() {
             ) : customers.length ? (
               paginatedCustomers.map((customer) => (
                 <div
-                  key={customer.id}
+                  key={`customer-${customer.id}`}
                   className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 shadow-sm ${
                     selectedCustomerId === customer.id
                       ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
@@ -819,9 +819,9 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5 min-h-[500px]">
             {loadingCustomer ? (
-              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-700">
+              <div className="flex min-h-[460px] items-center justify-center rounded-lg border border-dashed border-slate-700">
                 <div className="text-center">
                   <div className="flex justify-center">
                     <div className="h-8 w-8 animate-spin rounded-full border-3 border-slate-600 border-t-cyan-400"></div>
@@ -859,8 +859,8 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                  <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-6 shadow-sm">
+                <div className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-2 items-start">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-6 shadow-sm h-full min-h-[400px]">
                     <h3 className="text-lg font-semibold text-white">စာရင်းအသစ်သွင်းရန်</h3>
                     <form className="mt-4 space-y-4" onSubmit={createLedgerTransaction}>
                       <div className="flex p-1 bg-slate-900/80 rounded-xl border border-slate-800 mb-4 shadow-inner">
