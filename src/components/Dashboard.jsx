@@ -918,21 +918,23 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-xs text-slate-400">ငွေပေးချေမှုပုံစံ</label>
-                        <select
-                          className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                          value={ledgerForm.paymentType}
-                          onChange={(e) => setLedgerForm({ ...ledgerForm, paymentType: e.target.value })}
-                          disabled={isSubmitting}
-                        >
-                          <option value="">Select Payment Type</option>
-                          <option value="CASH">Cash</option>
-                          <option value="KPAY">KPay</option>
-                          <option value="BANK">Bank Transfer</option>
-                          <option value="WAVE">Wave Money</option>
-                        </select>
-                      </div>
+                      {ledgerForm.type === "DEBIT" && (
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">ငွေပေးချေမှုပုံစံ</label>
+                          <select
+                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                            value={ledgerForm.paymentType}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, paymentType: e.target.value })}
+                            disabled={isSubmitting}
+                          >
+                            <option value="">Select Payment Type</option>
+                            <option value="CASH">Cash</option>
+                            <option value="KPAY">KPay</option>
+                            <option value="BANK">Bank Transfer</option>
+                            <option value="WAVE">Wave Money</option>
+                          </select>
+                        </div>
+                      )}
 
                       <textarea
                         className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
