@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import KPISummaryDashboard from "./KPISummaryDashboard";
+import TransactionFilter from "./TransactionFilter";
 
 
 const money = new Intl.NumberFormat("en-US");
@@ -99,6 +100,7 @@ export default function Dashboard() {
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [filteredLedgers, setFilteredLedgers] = useState([]);
 
 
   // Show alert notification
@@ -563,6 +565,16 @@ export default function Dashboard() {
     return cartons * rate - deductions;
   }, [ledgerForm.cartons, ledgerForm.rate, ledgerForm.deductions, ledgerForm.type, ledgerForm.saleType]);
 
+  // Handle filter changes from TransactionFilter component
+  const handleFilterChange = useCallback((filtered) => {
+    setFilteredLedgers(filtered);
+  }, []);
+
+  // Reset filtered ledgers when selected customer changes
+  useEffect(() => {
+    setFilteredLedgers(selectedCustomer?.ledgers || []);
+  }, [selectedCustomer]);
+
   return (
     <main className="min-h-screen bg-slate-950">
       {alert && (
@@ -875,6 +887,13 @@ export default function Dashboard() {
                   </div>
                 </form>
 
+                <div className="mt-6">
+                  <TransactionFilter
+                    transactions={selectedCustomer?.ledgers || []}
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
+
                 <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
                   <table className="w-full min-w-[720px] border-collapse text-sm">
                     <thead className="bg-slate-900 text-left text-slate-300">
@@ -887,7 +906,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {(selectedCustomer?.ledgers || []).map((transaction) => (
+                      {(filteredLedgers.length > 0 ? filteredLedgers : selectedCustomer?.ledgers || []).map((transaction) => (
                         <tr key={transaction.id} className="bg-slate-950">
                           <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
                           <td className="px-4 py-3">
@@ -926,6 +945,12 @@ export default function Dashboard() {
                         <tr>
                           <td className="px-4 py-5 text-center text-slate-400" colSpan="5">
                             Transaction မရှိသေးပါ။
+                          </td>
+                        </tr>
+                      ) : filteredLedgers.length === 0 ? (
+                        <tr>
+                          <td className="px-4 py-5 text-center text-slate-400" colSpan="5">
+                            Filter မှ ကိုက်ညီသော Transaction မရှိပါ။
                           </td>
                         </tr>
                       ) : null}
