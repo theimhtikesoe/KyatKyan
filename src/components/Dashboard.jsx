@@ -734,16 +734,16 @@ export default function Dashboard() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm hover:text-cyan-600 transition-colors">{customer.name}</h3>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-600">
                         {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No contact"}
                       </p>
                     </div>
                   </div>
                   <div className="mt-2.5 pt-2.5 border-t border-slate-200/50 flex items-center justify-between">
-                    <p className="text-xs text-slate-600">Balance</p>
+                    <p className="text-xs text-slate-700 font-medium">Balance</p>
                     <p
                       className={`text-sm font-semibold ${
-                        customer.current_balance > 0 ? "text-rose-200" : "text-emerald-200"
+                        customer.current_balance > 0 ? "text-rose-700" : "text-emerald-700"
                       }`}
                     >
                       {formatMoney(customer.current_balance)}
@@ -834,7 +834,7 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h2 className="text-xl font-semibold text-slate-900">{selectedCustomer.name}</h2>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm text-slate-700">
                       {[selectedCustomer.phone, selectedCustomer.routeTag].filter(Boolean).join(" / ") ||
                         "No phone"}
                     </p>
@@ -848,7 +848,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-slate-600">လက်ကျန်အကြွေး</p>
+                    <p className="text-sm text-slate-700 font-medium">လက်ကျန်အကြွေး</p>
                     <p
                       className={`text-2xl font-bold sm:text-3xl ${
                         selectedCustomer.current_balance > 0 ? "text-rose-700" : "text-emerald-700"
@@ -892,7 +892,7 @@ export default function Dashboard() {
 
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ရက်စွဲ</label>
+                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-700 ml-1">ရက်စွဲ</label>
                           <div className="relative">
                             <input
                               type="date"
@@ -905,7 +905,7 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ပမာဏ (Ks)</label>
+                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-700 ml-1">ပမာဏ (Ks)</label>
                           <input
                             type="number"
                             className="w-full h-12 rounded-lg border border-slate-300 bg-slate-50/50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
@@ -920,7 +920,7 @@ export default function Dashboard() {
 
                       {ledgerForm.type === "DEBIT" && (
                         <div className="space-y-1">
-                          <label className="text-xs text-slate-600">ငွေပေးချေမှုပုံစံ</label>
+                          <label className="text-xs text-slate-700 font-medium">ငွေပေးချေမှုပုံစံ</label>
                           <select
                             className="w-full h-12 rounded-lg border border-slate-300 bg-slate-50/50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                             value={ledgerForm.paymentType}
@@ -1058,8 +1058,8 @@ export default function Dashboard() {
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="font-semibold text-slate-900">{customer.name}</h4>
-                          <p className="text-xs text-slate-600">{customer.phone || "No phone"}</p>
-                          <p className="mt-2 text-xs text-rose-300">
+                          <p className="text-xs text-slate-700">{customer.phone || "No phone"}</p>
+                          <p className="mt-2 text-xs text-rose-600 font-medium">
                             Deleted on: {formatDate(customer.deletedAt)}
                           </p>
                         </div>
@@ -1108,7 +1108,7 @@ export default function Dashboard() {
             <h3 className="text-xl font-semibold text-slate-900">Edit Customer</h3>
             <form className="mt-6 space-y-4" onSubmit={updateCustomer}>
               <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-medium">Customer Name</label>
+                <label className="text-xs text-slate-700 font-medium">Customer Name</label>
                 <input
                   className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.name}
@@ -1118,7 +1118,7 @@ export default function Dashboard() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-medium">Phone Number</label>
+                <label className="text-xs text-slate-700 font-medium">Phone Number</label>
                 <input
                   className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.phone}
@@ -1127,7 +1127,7 @@ export default function Dashboard() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs text-slate-600 font-medium">Route / Tag</label>
+                <label className="text-xs text-slate-700 font-medium">Route / Tag</label>
                 <input
                   className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.routeTag}
