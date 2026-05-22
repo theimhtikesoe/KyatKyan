@@ -890,18 +890,21 @@ export default function Dashboard() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1.5 min-w-0">
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
                           <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ရက်စွဲ</label>
-                          <input
-                            type="date"
-                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
-                            value={ledgerForm.date}
-                            onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })}
-                            disabled={isSubmitting}
-                          />
+                          <div className="relative">
+                            <input
+                              type="date"
+                              className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all appearance-none"
+                              style={{ colorScheme: 'dark' }}
+                              value={ledgerForm.date}
+                              onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })}
+                              disabled={isSubmitting}
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-1.5 min-w-0">
+                        <div className="space-y-1.5">
                           <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ပမာဏ (Ks)</label>
                           <input
                             type="number"
