@@ -90,6 +90,7 @@ export default function Dashboard() {
   const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [showExtraTools, setShowExtraTools] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,6 +138,7 @@ export default function Dashboard() {
       return;
     }
 
+    setLoadingCustomer(true);
     try {
       const customer = await api(`/api/customers/${id}`);
       setSelectedCustomer(customer);
@@ -144,6 +146,8 @@ export default function Dashboard() {
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
+    } finally {
+      setLoadingCustomer(false);
     }
   }, [selectedCustomerId, showAlert]);
 
@@ -578,7 +582,14 @@ export default function Dashboard() {
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {customers.length ? (
+            {loading ? (
+              <div className="col-span-full rounded-lg border border-slate-800 p-4 text-center text-slate-400">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-cyan-400"></div>
+                  <span>Customer များ ရှာဖွေနေသည်...</span>
+                </div>
+              </div>
+            ) : customers.length ? (
               customers.map((customer) => (
                 <div
                   key={customer.id}
@@ -635,11 +646,21 @@ export default function Dashboard() {
               <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
                 Customer မရှိသေးပါ။
               </p>
+            )
             )}
           </div>
 
           <div className="mt-6 rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-            {selectedCustomer ? (
+            {loadingCustomer ? (
+              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-700">
+                <div className="text-center">
+                  <div className="flex justify-center">
+                    <div className="h-8 w-8 animate-spin rounded-full border-3 border-slate-600 border-t-cyan-400"></div>
+                  </div>
+                  <p className="mt-4 text-slate-400">Customer အချက်အလက် ရယူနေသည်...</p>
+                </div>
+              </div>
+            ) : selectedCustomer ? (
               <>
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -749,7 +770,7 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {(selectedCustomer.ledgers || []).map((transaction) => (
+                      {(selectedCustomer?.ledgers || []).map((transaction) => (
                         <tr key={transaction.id} className="bg-slate-950">
                           <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
                           <td className="px-4 py-3">
@@ -797,6 +818,7 @@ export default function Dashboard() {
               <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-700 text-center text-slate-400">
                 Customer တစ်ယောက်ကို ရွေးပါ။
               </div>
+            )
             )}
           </div>
         </section>
