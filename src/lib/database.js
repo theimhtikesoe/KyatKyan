@@ -137,6 +137,7 @@ export async function ensureDatabase() {
         `ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "suggestedCustomerId" UUID`,
       );
       await setupQuery(`ALTER TABLE "Ledger" ADD COLUMN IF NOT EXISTS "paymentType" TEXT`);
+      await setupQuery(`ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "deletedAt" TIMESTAMP(3)`);
 
       // Create indexes for faster queries
       await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_customerId_idx" ON "Ledger"("customerId")`);
