@@ -585,7 +585,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-cyan-300">LatYar Ledger Dashboard</p>
               <h1 className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
-                Customer စာရင်းချုပ်
+                Customer ငွေရှင်းတမ်း/အကြွေးရှင်းတမ်း
               </h1>
             </div>
           </div>
