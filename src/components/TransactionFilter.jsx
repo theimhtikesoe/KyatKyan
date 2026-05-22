@@ -12,6 +12,7 @@ import React, { useState, useMemo, useEffect } from "react";
 export default function TransactionFilter({
   transactions = [],
   onFilterChange,
+  extraActions,
 }) {
   const [filterType, setFilterType] = useState("all");
   const [startDate, setStartDate] = useState("");
@@ -150,7 +151,7 @@ export default function TransactionFilter({
       </div>
 
       {/* Custom Date Range Selectors */}
-      <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
           <label className="text-xs text-slate-400 font-medium">
             Custom Range:
@@ -180,6 +181,14 @@ export default function TransactionFilter({
           >
             Reset
           </button>
+        )}
+        </div>
+
+        {/* Extra Actions (e.g., Export Button) */}
+        {extraActions && (
+          <div className="flex items-center">
+            {extraActions}
+          </div>
         )}
       </div>
     </div>

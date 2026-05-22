@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import KPISummaryDashboard from "./KPISummaryDashboard";
+// import KPISummaryDashboard from "./KPISummaryDashboard";
 import TransactionFilter from "./TransactionFilter";
 
 
@@ -510,13 +510,15 @@ export default function Dashboard() {
 
   // Export transaction data to CSV
   const exportToCSV = () => {
-    if (!selectedCustomer || !selectedCustomer.ledgers || selectedCustomer.ledgers.length === 0) {
+    const transactionsToExport = filteredLedgers.length > 0 ? filteredLedgers : (selectedCustomer?.ledgers || []);
+    
+    if (!selectedCustomer || transactionsToExport.length === 0) {
       showAlert("ထုတ်ယူရန် transaction မရှိပါ။", "error");
       return;
     }
 
     const headers = ["Date", "Type", "Amount", "Payment Type", "Note"];
-    const rows = selectedCustomer.ledgers.map(transaction => [
+    const rows = transactionsToExport.map(transaction => [
       formatDate(transaction.date),
       transaction.type === "CREDIT" ? "အကြွေးတိုး (Unpaid)" : "ငွေချေ (Paid)",
       transaction.amount,
@@ -594,7 +596,7 @@ export default function Dashboard() {
           ) : null}
         </header>
 
-        <KPISummaryDashboard />
+        {/* <KPISummaryDashboard /> */}
 
         <section className="rounded-lg border border-cyan-500/30 bg-slate-950 p-4">
           <button
@@ -786,29 +788,22 @@ export default function Dashboard() {
                       {[selectedCustomer.phone, selectedCustomer.routeTag].filter(Boolean).join(" / ") ||
                         "No phone"}
                     </p>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => openEditCustomer(selectedCustomer)}
-                        disabled={isSubmitting}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="min-h-11 rounded-md border border-emerald-700 px-4 py-2 text-sm font-medium text-emerald-200 hover:border-emerald-400 hover:text-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={exportToCSV}
-                        disabled={isSubmitting || !selectedCustomer?.ledgers?.length}
-                      >
-                        Export CSV
-                      </button>
-                      <button
-                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={() => setDeletingCustomer(selectedCustomer)}
-                        disabled={isSubmitting}
-                      >
-                        Delete
-                      </button>
-                    </div>
+	                    <div className="mt-3 flex gap-2">
+	                      <button
+	                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
+	                        onClick={() => openEditCustomer(selectedCustomer)}
+	                        disabled={isSubmitting}
+	                      >
+	                        Edit
+	                      </button>
+	                      <button
+	                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100 disabled:opacity-50 disabled:cursor-not-allowed"
+	                        onClick={() => setDeletingCustomer(selectedCustomer)}
+	                        disabled={isSubmitting}
+	                      >
+	                        Delete
+	                      </button>
+	                    </div>
                   </div>
                   <div className="rounded-lg border border-slate-800 px-4 py-3">
                     <p className="text-sm text-slate-400">လက်ရှိအကြွေးကျန်ငွေ</p>
@@ -836,6 +831,19 @@ export default function Dashboard() {
                       <option value="CREDIT">အကြွေးတိုး (Unpaid)</option>
                       <option value="DEBIT">ငွေချေ (Paid)</option>
                     </select>
+                    {ledgerForm.type === "DEBIT" && (
+                      <select
+                        className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                        value={ledgerForm.paymentType || ""}
+                        onChange={(event) => setLedgerForm({ ...ledgerForm, paymentType: event.target.value })}
+                        disabled={isSubmitting}
+                      >
+                        <option value="">Payment Type ရွေးပါ...</option>
+                        <option value="KPay">KPay</option>
+                        <option value="Wave Money">Wave Money</option>
+                        <option value="Mobile Banking">Mobile Banking</option>
+                      </select>
+                    )}
                     <input
                       className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
                       inputMode="numeric"
@@ -861,19 +869,6 @@ export default function Dashboard() {
                     />
                   </div>
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    {ledgerForm.type === "DEBIT" && (
-                      <select
-                        className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                        value={ledgerForm.paymentType || ""}
-                        onChange={(event) => setLedgerForm({ ...ledgerForm, paymentType: event.target.value })}
-                        disabled={isSubmitting}
-                      >
-                        <option value="">Payment Type ရွေးပါ...</option>
-                        <option value="KPay">KPay</option>
-                        <option value="Wave Money">Wave Money</option>
-                        <option value="Mobile Banking">Mobile Banking</option>
-                      </select>
-                    )}
                     <button 
                       className="min-h-12 rounded-md bg-cyan-400 px-8 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed md:ml-auto"
                       disabled={isSubmitting}
@@ -884,10 +879,19 @@ export default function Dashboard() {
                 </form>
 
                 <div className="mt-6">
-                  <TransactionFilter
-                    transactions={selectedCustomer?.ledgers || []}
-                    onFilterChange={handleFilterChange}
-                  />
+	                  <TransactionFilter
+	                    transactions={selectedCustomer?.ledgers || []}
+	                    onFilterChange={handleFilterChange}
+	                    extraActions={
+	                      <button
+	                        className="min-h-10 rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
+	                        onClick={exportToCSV}
+	                        disabled={isSubmitting || !selectedCustomer?.ledgers?.length}
+	                      >
+	                        Export CSV
+	                      </button>
+	                    }
+	                  />
                 </div>
 
                 <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
