@@ -123,6 +123,14 @@ export default function Dashboard() {
     }
   }, [search, showAlert]);
 
+  // Trigger search when search input changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadDashboard();
+    }, 300); // Debounce search by 300ms
+    return () => clearTimeout(timer);
+  }, [search, loadDashboard]);
+
   const loadCustomer = useCallback(async (id = selectedCustomerId) => {
     if (!id) {
       setSelectedCustomer(null);
@@ -680,8 +688,8 @@ export default function Dashboard() {
                       onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
                       disabled={isSubmitting}
                     >
-                      <option value="CREDIT">အကြွေးတိုး</option>
-                      <option value="DEBIT">ငွေချေ</option>
+                      <option value="CREDIT">အကြွေးတိုး (Unpaid)</option>
+                      <option value="DEBIT">ငွေချေ (Paid)</option>
                     </select>
                     <input
                       className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
@@ -709,26 +717,17 @@ export default function Dashboard() {
                   </div>
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     {ledgerForm.type === "DEBIT" && (
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-slate-400">Payment Type:</span>
-                        <div className="flex gap-2">
-                          {["Kpay", "Mobile Banking", "Wave"].map((type) => (
-                            <button
-                              key={type}
-                              type="button"
-                              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition ${
-                                ledgerForm.paymentType === type
-                                  ? "border-cyan-400 bg-cyan-400/10 text-cyan-200"
-                                  : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500"
-                              }`}
-                              onClick={() => setLedgerForm({ ...ledgerForm, paymentType: type })}
-                              disabled={isSubmitting}
-                            >
-                              {type}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      <select
+                        className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                        value={ledgerForm.paymentType || ""}
+                        onChange={(event) => setLedgerForm({ ...ledgerForm, paymentType: event.target.value })}
+                        disabled={isSubmitting}
+                      >
+                        <option value="">Payment Type ရွေးပါ...</option>
+                        <option value="KPay">KPay</option>
+                        <option value="Wave Money">Wave Money</option>
+                        <option value="Mobile Banking">Mobile Banking</option>
+                      </select>
                     )}
                     <button 
                       className="min-h-12 rounded-md bg-cyan-400 px-8 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed md:ml-auto"
@@ -761,7 +760,7 @@ export default function Dashboard() {
                                   : "bg-emerald-400/10 text-emerald-300"
                               }`}
                             >
-                              {transaction.type === "CREDIT" ? "အကြွေးတိုး" : "ငွေချေ"}
+                              {transaction.type === "CREDIT" ? "အကြွေးတိုး (Unpaid)" : "ငွေချေ (Paid)"}
                             </span>
                           </td>
                           <td
