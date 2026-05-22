@@ -18,6 +18,7 @@ model Customer {
   ledgers          Ledger[]
   suggestedKpay    UnverifiedKpay[] @relation("KpaySuggestion")
   createdAt        DateTime         @default(now())
+  deletedAt        DateTime?
 }
 
 model KpayAlias {

@@ -19,6 +19,7 @@ export async function GET(_request, { params }) {
         routeTag: true,
         current_balance: true,
         createdAt: true,
+        deletedAt: true,
         kpayAliases: {
           select: {
             id: true,
@@ -64,13 +65,15 @@ export async function PATCH(request, { params }) {
     const id = params.id;
     const body = await request.json();
 
+    const data = {};
+    if (body.name !== undefined) data.name = body.name.trim();
+    if (body.phone !== undefined) data.phone = body.phone?.trim() || null;
+    if (body.routeTag !== undefined) data.routeTag = body.routeTag?.trim() || null;
+    if (body.restore === true) data.deletedAt = null;
+
     const customer = await prisma.customer.update({
       where: { id },
-      data: {
-        ...(body.name !== undefined ? { name: body.name.trim() } : {}),
-        ...(body.phone !== undefined ? { phone: body.phone?.trim() || null } : {}),
-        ...(body.routeTag !== undefined ? { routeTag: body.routeTag?.trim() || null } : {}),
-      },
+      data,
       select: {
         id: true,
         name: true,
@@ -78,6 +81,7 @@ export async function PATCH(request, { params }) {
         routeTag: true,
         current_balance: true,
         createdAt: true,
+        deletedAt: true,
         kpayAliases: {
           select: {
             id: true,
@@ -111,27 +115,31 @@ export async function PATCH(request, { params }) {
   }
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(request, { params }) {
   try {
     await ensureDatabase();
 
     const id = params.id;
+    const { searchParams } = new URL(request.url);
+    const permanent = searchParams.get("permanent") === "true";
 
     if (!id) {
       return NextResponse.json({ error: "Customer id is required" }, { status: 400 });
     }
 
-    const customer = await prisma.customer.delete({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        routeTag: true,
-        current_balance: true,
-        createdAt: true,
-      },
-    });
+    let customer;
+    if (permanent) {
+      customer = await prisma.customer.delete({
+        where: { id },
+        select: { id: true, name: true },
+      });
+    } else {
+      customer = await prisma.customer.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+        select: { id: true, name: true, deletedAt: true },
+      });
+    }
 
     return NextResponse.json({ data: customer });
   } catch (error) {

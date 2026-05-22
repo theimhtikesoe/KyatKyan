@@ -61,6 +61,8 @@ function AlertNotification({ message, type, onClose }) {
 
 export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
+  const [deletedCustomers, setDeletedCustomers] = useState([]);
+  const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [pendingKpay, setPendingKpay] = useState([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -69,6 +71,7 @@ export default function Dashboard() {
   const [matchCustomerId, setMatchCustomerId] = useState("");
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [deletingCustomer, setDeletingCustomer] = useState(null);
+  const [permanentDeletingCustomer, setPermanentDeletingCustomer] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", routeTag: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
@@ -96,6 +99,7 @@ export default function Dashboard() {
   const [showAddCustomer, setShowAddCustomer] = useState(true);
   const [showExtraTools, setShowExtraTools] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
@@ -130,6 +134,24 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [search, showAlert]);
+
+  const loadDeletedCustomers = useCallback(async () => {
+    setLoadingDeleted(true);
+    try {
+      const deletedRows = await api("/api/customers?deleted=true");
+      setDeletedCustomers(deletedRows);
+    } catch (error) {
+      showAlert(error.message, "error");
+    } finally {
+      setLoadingDeleted(false);
+    }
+  }, [showAlert]);
+
+  useEffect(() => {
+    if (showRecycleBin) {
+      loadDeletedCustomers();
+    }
+  }, [showRecycleBin, loadDeletedCustomers]);
 
   // Trigger search when search input changes
   useEffect(() => {
@@ -483,12 +505,50 @@ export default function Dashboard() {
       }
       
       setDeletingCustomer(null);
-      showAlert(`Customer "${customerName}" အောင်မြင်စွာ ဖျက်ပြီးပါပြီ။`, "success");
+      showAlert(`Customer "${customerName}" ကို အမှိုက်ပုံးထဲသို့ ရွှေ့လိုက်ပါပြီ။`, "success");
+      if (showRecycleBin) loadDeletedCustomers();
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
       // Revert optimistic update on error
       await loadDashboard();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function restoreCustomer(customer) {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await api(`/api/customers/${customer.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ restore: true }),
+      });
+      
+      setDeletedCustomers(prev => prev.filter(c => c.id !== customer.id));
+      setCustomers(prev => [customer, ...prev]);
+      showAlert(`Customer "${customer.name}" ကို ပြန်လည်ဆယ်ယူပြီးပါပြီ။`, "success");
+    } catch (error) {
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function permanentDeleteCustomer() {
+    if (!permanentDeletingCustomer || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await api(`/api/customers/${permanentDeletingCustomer.id}?permanent=true`, {
+        method: "DELETE",
+      });
+      
+      setDeletedCustomers(prev => prev.filter(c => c.id !== permanentDeletingCustomer.id));
+      setPermanentDeletingCustomer(null);
+      showAlert(`Customer "${permanentDeletingCustomer.name}" ကို အပြီးတိုင်ဖျက်လိုက်ပါပြီ။`, "success");
+    } catch (error) {
+      showAlert(error.message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -587,6 +647,14 @@ export default function Dashboard() {
               <h1 className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
                 Customer ငွေရှင်းတမ်း/အကြွေးရှင်းတမ်း
               </h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowRecycleBin(true)}
+                className="flex items-center gap-2 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-900 transition-colors"
+              >
+                🗑️ Recycle Bin
+              </button>
             </div>
           </div>
           {message ? (
@@ -788,28 +856,26 @@ export default function Dashboard() {
                       {[selectedCustomer.phone, selectedCustomer.routeTag].filter(Boolean).join(" / ") ||
                         "No phone"}
                     </p>
-	                    <div className="mt-3 flex gap-2">
-	                      <button
-	                        className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
-	                        onClick={() => openEditCustomer(selectedCustomer)}
-	                        disabled={isSubmitting}
-	                      >
-	                        Edit
-	                      </button>
-	                      <button
-	                        className="min-h-11 rounded-md border border-rose-900/70 px-4 py-2 text-sm font-medium text-rose-200 hover:border-rose-400 hover:text-rose-100 disabled:opacity-50 disabled:cursor-not-allowed"
-	                        onClick={() => setDeletingCustomer(selectedCustomer)}
-	                        disabled={isSubmitting}
-	                      >
-	                        Delete
-	                      </button>
-	                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        className="min-h-11 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+                        onClick={() => setShowExtraTools((v) => !v)}
+                      >
+                        {showExtraTools ? "Hide Tools" : "Show Extra Tools"}
+                      </button>
+                      <button
+                        className="min-h-11 rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+                        onClick={exportToCSV}
+                      >
+                        Export to CSV
+                      </button>
+                    </div>
                   </div>
-                  <div className="rounded-lg border border-slate-800 px-4 py-3">
-                    <p className="text-sm text-slate-400">လက်ရှိအကြွေးကျန်ငွေ</p>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-400">လက်ကျန်အကြွေး</p>
                     <p
-                      className={`mt-1 text-2xl font-semibold ${
-                        selectedCustomer.current_balance > 0 ? "text-rose-200" : "text-emerald-200"
+                      className={`text-2xl font-bold sm:text-3xl ${
+                        selectedCustomer.current_balance > 0 ? "text-rose-400" : "text-emerald-400"
                       }`}
                     >
                       {formatMoney(selectedCustomer.current_balance)}
@@ -817,276 +883,467 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <form
-                  className="mt-6 grid gap-3 rounded-lg border border-slate-800 p-3 sm:p-4"
-                  onSubmit={createLedgerTransaction}
-                >
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-                    <select
-                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                      value={ledgerForm.type}
-                      onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
-                      disabled={isSubmitting}
-                    >
-                      <option value="CREDIT">အကြွေးတိုး (Unpaid)</option>
-                      <option value="DEBIT">ငွေချေ (Paid)</option>
-                    </select>
-                    {ledgerForm.type === "DEBIT" && (
-                      <select
-                        className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                        value={ledgerForm.paymentType || ""}
-                        onChange={(event) => setLedgerForm({ ...ledgerForm, paymentType: event.target.value })}
+                <div className="mt-6 grid gap-6 lg:grid-cols-2">
+                  <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                    <h3 className="text-lg font-semibold text-white">စာရင်းအသစ်သွင်းရန်</h3>
+                    <form className="mt-4 space-y-4" onSubmit={createLedgerTransaction}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          className={`min-h-12 rounded-md border py-2 text-sm font-medium transition ${
+                            ledgerForm.type === "CREDIT"
+                              ? "border-rose-500 bg-rose-500/10 text-rose-400"
+                              : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                          }`}
+                          onClick={() => setLedgerForm({ ...ledgerForm, type: "CREDIT" })}
+                          disabled={isSubmitting}
+                        >
+                          အကြွေးတိုး (Unpaid)
+                        </button>
+                        <button
+                          type="button"
+                          className={`min-h-12 rounded-md border py-2 text-sm font-medium transition ${
+                            ledgerForm.type === "DEBIT"
+                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
+                              : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                          }`}
+                          onClick={() => setLedgerForm({ ...ledgerForm, type: "DEBIT" })}
+                          disabled={isSubmitting}
+                        >
+                          ငွေချေ (Paid)
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">ရက်စွဲ (ရွေးချယ်ရန်)</label>
+                          <input
+                            type="date"
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            value={ledgerForm.date}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">ပမာဏ (Ks)</label>
+                          <input
+                            type="number"
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            placeholder="Amount"
+                            value={ledgerForm.amount}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, amount: e.target.value })}
+                            required
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs text-slate-400">ငွေပေးချေမှုပုံစံ</label>
+                        <select
+                          className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                          value={ledgerForm.paymentType}
+                          onChange={(e) => setLedgerForm({ ...ledgerForm, paymentType: e.target.value })}
+                          disabled={isSubmitting}
+                        >
+                          <option value="">Select Payment Type</option>
+                          <option value="CASH">Cash</option>
+                          <option value="KPAY">KPay</option>
+                          <option value="BANK">Bank Transfer</option>
+                          <option value="WAVE">Wave Money</option>
+                        </select>
+                      </div>
+
+                      <textarea
+                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        placeholder="မှတ်စု (Note)"
+                        rows="2"
+                        value={ledgerForm.note}
+                        onChange={(e) => setLedgerForm({ ...ledgerForm, note: e.target.value })}
+                        disabled={isSubmitting}
+                      ></textarea>
+
+                      <button 
+                        className="w-full min-h-12 rounded-md bg-cyan-400 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isSubmitting}
                       >
-                        <option value="">Payment Type ရွေးပါ...</option>
-                        <option value="KPay">KPay</option>
-                        <option value="Wave Money">Wave Money</option>
-                        <option value="Mobile Banking">Mobile Banking</option>
-                      </select>
-                    )}
-                    <input
-                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                      inputMode="numeric"
-                      placeholder="ငွေပမာဏ"
-                      value={ledgerForm.amount}
-                      onChange={(event) => setLedgerForm({ ...ledgerForm, amount: event.target.value })}
-                      disabled={isSubmitting}
-                      required
-                    />
-                    <input
-                      type="date"
-                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                      value={ledgerForm.date}
-                      onChange={(event) => setLedgerForm({ ...ledgerForm, date: event.target.value })}
-                      disabled={isSubmitting}
-                    />
-                    <input
-                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                      placeholder="မှတ်ချက်"
-                      value={ledgerForm.note}
-                      onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
-                      disabled={isSubmitting}
-                    />
+                        {isSubmitting ? "Saving..." : "Save Transaction"}
+                      </button>
+                    </form>
                   </div>
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <button 
-                      className="min-h-12 rounded-md bg-cyan-400 px-8 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed md:ml-auto"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Saving..." : "Save"}
-                    </button>
-                  </div>
-                </form>
 
-                <div className="mt-6">
-	                  <TransactionFilter
-	                    transactions={selectedCustomer?.ledgers || []}
-	                    onFilterChange={handleFilterChange}
-	                    extraActions={
-	                      <button
-	                        className="min-h-10 rounded-md bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
-	                        onClick={exportToCSV}
-	                        disabled={isSubmitting || !selectedCustomer?.ledgers?.length}
-	                      >
-	                        Export CSV
-	                      </button>
-	                    }
-	                  />
+                  <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                    <h3 className="text-lg font-semibold text-white">အရောင်းစာရင်းသွင်းရန် (Sales)</h3>
+                    <form className="mt-4 space-y-4" onSubmit={createSalesLedger}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">အမျိုးအစား</label>
+                          <select
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            value={ledgerForm.itemSize}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, itemSize: e.target.value })}
+                            disabled={isSubmitting}
+                          >
+                            <option value="">Select Size</option>
+                            <option value="1L">1 Liter</option>
+                            <option value="500ML">500 ML</option>
+                            <option value="330ML">330 ML</option>
+                            <option value="OTHER">Other</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">အရေအတွက် (ဖာ)</label>
+                          <input
+                            type="number"
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            placeholder="Cartons"
+                            value={ledgerForm.cartons}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, cartons: e.target.value })}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">ဈေးနှုန်း (Ks)</label>
+                          <input
+                            type="number"
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            placeholder="Rate"
+                            value={ledgerForm.rate}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, rate: e.target.value })}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs text-slate-400">နုတ်ပမာဏ (Ks)</label>
+                          <input
+                            type="number"
+                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            placeholder="Deductions"
+                            value={ledgerForm.deductions}
+                            onChange={(e) => setLedgerForm({ ...ledgerForm, deductions: e.target.value })}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      {computedSaleAmount !== null && (
+                        <div className="rounded-md bg-cyan-950/40 p-3 text-center border border-cyan-900/50">
+                          <p className="text-xs text-cyan-300">စုစုပေါင်း ကျသင့်ငွေ</p>
+                          <p className="text-xl font-bold text-cyan-400">{formatMoney(computedSaleAmount)}</p>
+                        </div>
+                      )}
+
+                      <button 
+                        className="w-full min-h-12 rounded-md bg-indigo-500 py-3 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? "Saving..." : "Save Sales Entry"}
+                      </button>
+                    </form>
+                  </div>
                 </div>
 
-                <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
-                  <table className="w-full min-w-[720px] border-collapse text-sm">
-                    <thead className="bg-slate-900 text-left text-slate-300">
-                      <tr>
-                        <th className="px-4 py-3 font-medium">Date</th>
-                        <th className="px-4 py-3 font-medium">Type</th>
-                        <th className="px-4 py-3 text-right font-medium">Amount</th>
-                        <th className="px-4 py-3 font-medium">Payment Type</th>
-                        <th className="px-4 py-3 font-medium">Note</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                      {filteredLedgers.map((transaction) => (
-                        <tr key={transaction.id} className="bg-slate-950">
-                          <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
-                          <td className="px-4 py-3">
-                            <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                                transaction.type === "CREDIT"
-                                  ? "bg-rose-400/10 text-rose-300"
-                                  : "bg-emerald-400/10 text-emerald-300"
-                              }`}
-                            >
-                              {transaction.type === "CREDIT" ? "အကြွေးတိုး (Unpaid)" : "ငွေချေ (Paid)"}
-                            </span>
-                          </td>
-                          <td
-                            className={`px-4 py-3 text-right font-semibold ${
-                              transaction.type === "CREDIT" ? "text-rose-200" : "text-emerald-200"
-                            }`}
-                          >
-                            {formatMoney(transaction.amount)}
-                          </td>
-                          <td className="px-4 py-3">
-                            {transaction.paymentType ? (
-                              <span className="inline-block rounded-full bg-cyan-400/10 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
-                                {transaction.paymentType}
-                              </span>
-                            ) : (
-                              <span className="text-slate-500">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-slate-400">
-                            {transaction.note || "-"}
-                          </td>
-                        </tr>
-                      ))}
-                      {!(selectedCustomer.ledgers || []).length ? (
+                <div className="mt-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">စာရင်းမှတ်တမ်း (Transactions)</h3>
+                  </div>
+                  
+                  <TransactionFilter 
+                    transactions={selectedCustomer.ledgers || []} 
+                    onFilterChange={handleFilterChange}
+                  />
+
+                  <div className="mt-4 overflow-x-auto rounded-lg border border-slate-800">
+                    <table className="w-full text-left text-sm text-slate-300">
+                      <thead className="bg-slate-900 text-xs uppercase text-slate-400">
                         <tr>
-                          <td className="px-4 py-5 text-center text-slate-400" colSpan="5">
-                            Transaction မရှိသေးပါ။
-                          </td>
+                          <th className="px-4 py-3">Date</th>
+                          <th className="px-4 py-3">Type</th>
+                          <th className="px-4 py-3 text-right">Amount</th>
+                          <th className="px-4 py-3">Payment</th>
+                          <th className="px-4 py-3">Note</th>
                         </tr>
-                      ) : filteredLedgers.length === 0 ? (
-                        <tr>
-                          <td className="px-4 py-5 text-center text-slate-400" colSpan="5">
-                            Filter မှ ကိုက်ညီသော Transaction မရှိပါ။
-                          </td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800 bg-slate-950">
+                        {filteredLedgers.length ? (
+                          filteredLedgers.map((ledger) => (
+                            <tr key={ledger.id} className="hover:bg-slate-900/50">
+                              <td className="whitespace-nowrap px-4 py-3 text-xs">
+                                {formatDate(ledger.date)}
+                              </td>
+                              <td className="px-4 py-3">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                    ledger.type === "CREDIT"
+                                      ? "bg-rose-500/10 text-rose-400"
+                                      : "bg-emerald-500/10 text-emerald-400"
+                                  }`}
+                                >
+                                  {ledger.type === "CREDIT" ? "အကြွေးတိုး" : "ငွေချေ"}
+                                </span>
+                              </td>
+                              <td
+                                className={`px-4 py-3 text-right font-medium ${
+                                  ledger.type === "CREDIT" ? "text-rose-200" : "text-emerald-200"
+                                }`}
+                              >
+                                {formatMoney(ledger.amount)}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-slate-400">
+                                {ledger.paymentType || "-"}
+                              </td>
+                              <td className="px-4 py-3 text-xs text-slate-400 max-w-[200px] truncate">
+                                {ledger.note || "-"}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                              Transaction မရှိသေးပါ။
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </>
             ) : (
-              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-700 text-center text-slate-400">
-                Customer တစ်ယောက်ကို ရွေးပါ။
+              <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-800 bg-slate-950/50">
+                <div className="text-center">
+                  <p className="text-lg font-medium text-slate-500">Customer တစ်ယောက်ကို ရွေးချယ်ပါ</p>
+                  <p className="mt-1 text-sm text-slate-600">အချက်အလက်များ ကြည့်ရှုရန်နှင့် စာရင်းသွင်းရန်</p>
+                </div>
               </div>
             )}
           </div>
         </section>
 
+        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Daily Report</h2>
+            <input
+              type="date"
+              className="rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+            />
+          </div>
 
+          {report ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                <p className="text-xs text-slate-400">Total Credit (အကြွေးတိုး)</p>
+                <p className="mt-1 text-xl font-bold text-rose-400">{formatMoney(report.totalCredit)}</p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                <p className="text-xs text-slate-400">Total Debit (ငွေချေ)</p>
+                <p className="mt-1 text-xl font-bold text-emerald-400">{formatMoney(report.totalDebit)}</p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                <p className="text-xs text-slate-400">Total Cash</p>
+                <p className="mt-1 text-xl font-bold text-cyan-400">{formatMoney(report.totalCash)}</p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                <p className="text-xs text-slate-400">Total KPay</p>
+                <p className="mt-1 text-xl font-bold text-cyan-400">{formatMoney(report.totalKpay)}</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Report ရယူနေသည်...</p>
+          )}
+        </section>
+      </div>
 
-        {editingCustomer ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
-              <h3 className="text-lg font-semibold text-white">Edit Customer</h3>
-              <form className="mt-4 grid gap-3" onSubmit={updateCustomer}>
+      {/* Recycle Bin Modal */}
+      {showRecycleBin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-xl border border-slate-800 bg-slate-950 shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 p-4 sm:p-5">
+              <h3 className="text-xl font-semibold text-white">🗑️ Recycle Bin (ဖျက်ထားသော Customer များ)</h3>
+              <button
+                onClick={() => setShowRecycleBin(false)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-900 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
+              {loadingDeleted ? (
+                <div className="flex justify-center py-10">
+                  <div className="h-8 w-8 animate-spin rounded-full border-3 border-slate-600 border-t-cyan-400"></div>
+                </div>
+              ) : deletedCustomers.length ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {deletedCustomers.map((customer) => (
+                    <div key={customer.id} className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-semibold text-white">{customer.name}</h4>
+                          <p className="text-xs text-slate-400">{customer.phone || "No phone"}</p>
+                          <p className="mt-2 text-xs text-rose-300">
+                            Deleted on: {formatDate(customer.deletedAt)}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={() => restoreCustomer(customer)}
+                            className="rounded-md bg-emerald-600/20 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-600/30"
+                            disabled={isSubmitting}
+                          >
+                            Restore
+                          </button>
+                          <button
+                            onClick={() => setPermanentDeletingCustomer(customer)}
+                            className="rounded-md bg-rose-600/20 px-3 py-1.5 text-xs font-medium text-rose-400 hover:bg-rose-600/30"
+                            disabled={isSubmitting}
+                          >
+                            Delete Forever
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-10 text-center text-slate-500">
+                  အမှိုက်ပုံးထဲတွင် ဘာမှမရှိပါ။
+                </div>
+              )}
+            </div>
+            <div className="border-t border-slate-800 p-4 text-right">
+              <button
+                onClick={() => setShowRecycleBin(false)}
+                className="rounded-md bg-slate-800 px-5 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Customer Modal */}
+      {editingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
+            <h3 className="text-xl font-semibold text-white">Edit Customer</h3>
+            <form className="mt-6 space-y-4" onSubmit={updateCustomer}>
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-medium">Customer Name</label>
                 <input
-                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
-                  placeholder="အမည်"
+                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   required
                   disabled={isSubmitting}
                 />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-medium">Phone Number</label>
                 <input
-                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
-                  inputMode="tel"
-                  placeholder="ဖုန်းနံပါတ်"
+                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   disabled={isSubmitting}
                 />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-medium">Route / Tag</label>
                 <input
-                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
-                  placeholder="Route Tag"
+                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
                   value={editForm.routeTag}
                   onChange={(e) => setEditForm({ ...editForm, routeTag: e.target.value })}
                   disabled={isSubmitting}
                 />
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
-                    onClick={() => setEditingCustomer(null)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="flex-1 rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        ) : null}
-
-        {deletingCustomer ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
-              <h3 className="text-lg font-semibold text-white">Delete Customer?</h3>
-              <p className="mt-2 text-sm text-slate-400">
-                သည် &quot;{deletingCustomer.name}&quot; ကို ဖျက်မည် သည်။ ဒီလုပ်ဆောင်ချက်ကို ပြန်လည်ပြင်ဆင်၍ မရပါ။
-              </p>
+              </div>
               <div className="mt-6 flex gap-3">
                 <button
-                  className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
-                  onClick={() => setDeletingCustomer(null)}
+                  type="button"
+                  className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                  onClick={() => setEditingCustomer(null)}
                   disabled={isSubmitting}
                 >
                   Cancel
                 </button>
-                <button
-                  className="flex-1 rounded-md bg-rose-600 px-4 py-2 font-semibold text-white hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={deleteCustomer}
+                <button 
+                  className="flex-1 rounded-md bg-cyan-400 py-3 text-sm font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Deleting..." : "Delete"}
+                  {isSubmitting ? "Updating..." : "Update"}
                 </button>
               </div>
-            </div>
+            </form>
           </div>
-        ) : null}
+        </div>
+      )}
 
-        {matchingKpay ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-900 p-6">
-              <h3 className="text-lg font-semibold text-white">Match KPay to Customer</h3>
-              <p className="mt-2 text-sm text-slate-400">
-                {formatMoney(matchingKpay.amount)} ကို customer နှင့် တွဲဆက်ပါ။
-              </p>
-              <form className="mt-4 grid gap-3" onSubmit={matchKpay}>
-                <select
-                  className="min-h-11 rounded-md border border-slate-700 bg-slate-800 px-4 py-2 text-white outline-none focus:border-cyan-400"
-                  value={matchCustomerId}
-                  onChange={(e) => setMatchCustomerId(e.target.value)}
-                  required
-                  disabled={isSubmitting}
-                >
-                  <option value="">Customer ရွေးပါ...</option>
-                  {customers.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    className="flex-1 rounded-md border border-slate-700 px-4 py-2 text-slate-300 hover:border-slate-600 disabled:opacity-50"
-                    onClick={() => setMatchingKpay(null)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    className="flex-1 rounded-md bg-cyan-400 px-4 py-2 font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Matching..." : "Match"}
-                  </button>
-                </div>
-              </form>
+      {/* Soft Delete Confirmation Modal */}
+      {deletingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+              🗑️
+            </div>
+            <h3 className="mt-4 text-xl font-semibold text-white">Delete Customer?</h3>
+            <p className="mt-2 text-slate-400">
+              &quot;{deletingCustomer.name}&quot; ကို ဖျက်ရန် သေချာပါသလား? ဖျက်လိုက်သော Customer များကို Recycle Bin ထဲတွင် ပြန်လည်ရှာဖွေနိုင်ပါသည်။
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                onClick={() => setDeletingCustomer(null)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                onClick={deleteCustomer}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Deleting..." : "Move to Bin"}
+              </button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Confirmation Modal */}
+      {permanentDeletingCustomer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-rose-900/50 bg-slate-950 p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/20 text-rose-500">
+              ⚠️
+            </div>
+            <h3 className="mt-4 text-xl font-semibold text-white">Permanent Delete?</h3>
+            <p className="mt-2 text-slate-400">
+              &quot;{permanentDeletingCustomer.name}&quot; ကို အပြီးတိုင်ဖျက်ရန် သေချာပါသလား? ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍မရပါ။ စာရင်းဇယားများအားလုံး ပျက်သွားပါလိမ့်မည်။
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                className="flex-1 rounded-md bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700"
+                onClick={() => setPermanentDeletingCustomer(null)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                onClick={permanentDeleteCustomer}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Deleting..." : "Delete Forever"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

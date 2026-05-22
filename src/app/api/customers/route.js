@@ -10,18 +10,26 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim();
+    const showDeleted = searchParams.get("deleted") === "true";
 
     // Optimized: Select only necessary fields to reduce data transfer
     const customers = await prisma.customer.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q, mode: "insensitive" } },
-              { routeTag: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
+      where: {
+        AND: [
+          q
+            ? {
+                OR: [
+                  { name: { contains: q, mode: "insensitive" } },
+                  { phone: { contains: q, mode: "insensitive" } },
+                  { routeTag: { contains: q, mode: "insensitive" } },
+                ],
+              }
+            : {},
+          {
+            deletedAt: showDeleted ? { not: null } : null,
+          },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -29,6 +37,7 @@ export async function GET(request) {
         routeTag: true,
         current_balance: true,
         createdAt: true,
+        deletedAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
