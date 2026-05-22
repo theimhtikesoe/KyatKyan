@@ -85,6 +85,8 @@ export default function Dashboard() {
     deductions: "",
     amount: "",
     note: "",
+    date: "",
+    paymentType: "",
   });
   const [activeTab, setActiveTab] = useState("kpay");
   const [reportDate, setReportDate] = useState(today);
@@ -252,6 +254,7 @@ export default function Dashboard() {
           amount: Number(ledgerForm.amount),
           note: ledgerForm.note,
           paymentType: ledgerForm.paymentType || null,
+          date: ledgerForm.date || null,
         }),
       });
       
@@ -273,6 +276,7 @@ export default function Dashboard() {
         deductions: "",
         amount: "",
         note: "",
+        date: "",
         paymentType: "",
       });
       
@@ -323,6 +327,7 @@ export default function Dashboard() {
           cartons: Number(ledgerForm.cartons || 0) || null,
           rate: Number(ledgerForm.rate || 0) || null,
           deductions: Number(ledgerForm.deductions || 0),
+          date: ledgerForm.date || null,
         }),
       });
       
@@ -343,6 +348,8 @@ export default function Dashboard() {
         deductions: "",
         amount: "",
         note: "",
+        date: "",
+        paymentType: "",
       });
       
       showAlert("Sales လက်ခြင်းအောင်မြင်စွာ သိမ်းဆည်းပြီးပါပြီ။", "success");

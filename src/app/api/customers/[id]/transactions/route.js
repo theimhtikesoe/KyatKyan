@@ -52,7 +52,7 @@ export async function POST(request, { params }) {
           amount,
           note: body.note?.trim() || null,
           paymentType: body.paymentType || null,
-          date: body.date ? new Date(body.date) : new Date(),
+          date: body.date ? new Date(`${body.date}T00:00:00Z`) : new Date(),
         },
         select: {
           id: true,
