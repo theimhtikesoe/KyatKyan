@@ -526,11 +526,11 @@ export default function Dashboard() {
 
     // Create CSV content
     const csvContent = [
-      `Customer: ${selectedCustomer.name},,,,`,
-      `Phone: ${selectedCustomer.phone || "-"},,,,`,
-      `Route Tag: ${selectedCustomer.routeTag || "-"},,,,`,
-      `Current Balance: ${formatMoney(selectedCustomer.current_balance)},,,,`,
-      `Export Date: ${new Date().toLocaleString('en-GB')},,,,`,
+      `"Customer: ${selectedCustomer.name}",,,,`,
+      `"Phone: ${selectedCustomer.phone || "-"}",,,,`,
+      `"Route Tag: ${selectedCustomer.routeTag || "-"}",,,,`,
+      `"Current Balance: ${formatMoney(selectedCustomer.current_balance)}",,,,`,
+      `"Export Date: ${new Date().toLocaleString('en-GB')}",,,,`,
       ",,,,",
       headers.join(","),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(",")),
