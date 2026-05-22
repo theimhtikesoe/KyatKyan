@@ -646,7 +646,6 @@ export default function Dashboard() {
               <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
                 Customer မရှိသေးပါ။
               </p>
-            )
             )}
           </div>
 
@@ -818,7 +817,6 @@ export default function Dashboard() {
               <div className="flex min-h-[420px] items-center justify-center rounded-lg border border-dashed border-slate-700 text-center text-slate-400">
                 Customer တစ်ယောက်ကို ရွေးပါ။
               </div>
-            )
             )}
           </div>
         </section>
