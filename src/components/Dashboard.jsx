@@ -74,7 +74,7 @@ export default function Dashboard() {
   const [permanentDeletingCustomer, setPermanentDeletingCustomer] = useState(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "", routeTag: "" });
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(12);
+  const [itemsPerPage] = useState(24);
   const [newCustomer, setNewCustomer] = useState({
     name: "",
     phone: "",

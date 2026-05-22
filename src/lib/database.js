@@ -54,6 +54,19 @@ export async function ensureDatabase() {
   // Start setup and cache the promise
   setupPromise = (async () => {
     try {
+      // Use a lightweight check before running full setup to reduce overhead
+      // Only run setup if a key table is missing
+      const tableCheck = await prisma.$queryRaw`
+        SELECT count(*) 
+        FROM information_schema.tables 
+        WHERE table_name = 'Customer'
+      `.catch(() => [{ count: 0 }]);
+
+      if (tableCheck[0]?.count > 0) {
+        setupComplete = true;
+        return;
+      }
+
       await setupQuery(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
 
       const legacyCustomerId = await prisma.$queryRaw`
@@ -63,7 +76,7 @@ export async function ensureDatabase() {
           AND column_name = 'id'
           AND udt_name <> 'uuid'
         LIMIT 1
-      `;
+      `.catch(() => []);
 
       if (legacyCustomerId.length) {
         await setupQuery(`DROP TABLE IF EXISTS "LedgerTransaction" CASCADE`);
@@ -80,7 +93,8 @@ export async function ensureDatabase() {
           "phone" TEXT,
           "routeTag" TEXT,
           "current_balance" INTEGER NOT NULL DEFAULT 0,
-          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "deletedAt" TIMESTAMP(3)
         )
       `);
       await setupQuery(`
@@ -128,6 +142,7 @@ export async function ensureDatabase() {
         )
       `);
 
+      // Ensure all columns exist (for migrations)
       await setupQuery(`ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "routeTag" TEXT`);
       await setupQuery(
         `ALTER TABLE "Customer" ADD COLUMN IF NOT EXISTS "current_balance" INTEGER NOT NULL DEFAULT 0`,
@@ -148,6 +163,7 @@ export async function ensureDatabase() {
       // Mark setup as complete
       setupComplete = true;
     } catch (error) {
+      console.error("Database setup failed:", error);
       // Reset promises on error to allow retry
       setupPromise = null;
       throw error;
