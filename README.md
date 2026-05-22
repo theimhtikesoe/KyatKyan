@@ -1,4 +1,4 @@
-# LatYar Ledger & KPay Automation
+# New Life Ledger & KPay Automation
 
 Next.js App Router, Tailwind CSS, Postgres, and Prisma based ledger system for KPay notification intake.
 

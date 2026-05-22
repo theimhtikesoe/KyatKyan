@@ -1,13 +1,13 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "LatYar Ledger & KPay Automation",
+  title: "New Life Ledger",
   description: "KPay webhook automation and customer ledger dashboard",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "KyatKyan",
+    title: "New Life Ledger",
   },
   icons: {
     icon: [
@@ -35,7 +35,7 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="KyatKyan" />
+        <meta name="apple-mobile-web-app-title" content="New Life Ledger" />
         <meta name="theme-color" content="#00d4ff" />
         <meta name="msapplication-TileColor" content="#00d4ff" />
         <meta name="msapplication-config" content="/browserconfig.xml" />

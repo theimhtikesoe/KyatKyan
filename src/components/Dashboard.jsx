@@ -625,7 +625,7 @@ export default function Dashboard() {
         <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-cyan-300">LatYar Ledger Dashboard</p>
+              <p className="text-sm text-cyan-300">New Life Ledger Dashboard</p>
               <h1 className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
                 Customer ငွေရှင်းတမ်း/အကြွေးရှင်းတမ်း
               </h1>

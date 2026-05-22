@@ -1,6 +1,6 @@
 # Project Requirement Document (PRD) & System Report
 
-**Project Name:** LatYar Ledger & KPay Automation System  
+**Project Name:** New Life Ledger & KPay Automation System  
 **Client/User:** Rhyzoe (Dev x Artist)  
 **Current Stack:** Next.js App Router, Tailwind CSS, Postgres via Prisma ORM, MacroDroid/Android automation, Telegram Bot API.
 
