@@ -704,15 +704,24 @@ export default function Dashboard() {
 
 
         <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
-          <div className="mb-4">
+          <div className="flex items-center justify-between mb-4">
             <input
               type="text"
-              className="w-full h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
+              className="flex-1 h-12 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm text-slate-900 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
               placeholder="Customer ရှာဖွေရန် (အမည် သို့မဟုတ် ဖုန်းနံပါတ်)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            {selectedCustomerId && (
+              <button
+                onClick={() => setShowCustomerList(!showCustomerList)}
+                className="ml-3 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                {showCustomerList ? "Hide" : "Show"}
+              </button>
+            )}
           </div>
+          {showCustomerList && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2">
             {loading ? (
               <div className="col-span-full rounded-lg border border-slate-200 p-4 text-center text-slate-600">
@@ -781,7 +790,8 @@ export default function Dashboard() {
             )}
           </div>
 
-          {customers.length > 0 && totalPages > 1 && (
+          )}
+          {customers.length > 0 && totalPages > 1 && showCustomerList && (
             <div className="mt-4 flex items-center justify-between gap-2">
               <div className="text-sm text-slate-600">
                 <span className="font-medium text-slate-700">{customers.length}</span> customers - Page <span className="font-medium text-slate-700">{currentPage}</span> of <span className="font-medium text-slate-700">{totalPages}</span>
