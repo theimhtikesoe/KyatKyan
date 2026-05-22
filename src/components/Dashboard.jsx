@@ -706,13 +706,13 @@ export default function Dashboard() {
           <div className="mb-4">
             <input
               type="text"
-              className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+              className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
               placeholder="Customer ရှာဖွေရန် (အမည် သို့မဟုတ် ဖုန်းနံပါတ်)"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
             {loading ? (
               <div className="col-span-full rounded-lg border border-slate-800 p-4 text-center text-slate-400">
                 <div className="flex items-center justify-center gap-2">
@@ -724,22 +724,22 @@ export default function Dashboard() {
               paginatedCustomers.map((customer) => (
                 <div
                   key={customer.id}
-                  className={`cursor-pointer rounded-lg border p-4 transition ${
+                  className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 shadow-sm ${
                     selectedCustomerId === customer.id
-                      ? "border-cyan-400 bg-cyan-400/10"
-                      : "border-slate-800 bg-slate-900/50 hover:border-slate-600"
+                      ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
+                      : "border-slate-800 bg-slate-900/40 hover:border-slate-700 hover:bg-slate-900/60"
                   }`}
                   onClick={() => setSelectedCustomerId(customer.id)}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold text-white hover:text-cyan-400 transition-colors">{customer.name}</h3>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <h3 className="font-bold text-white text-sm hover:text-cyan-400 transition-colors">{customer.name}</h3>
+                      <p className="text-[11px] text-slate-500">
                         {[customer.phone, customer.routeTag].filter(Boolean).join(" / ") || "No contact"}
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-800/50 flex items-center justify-between">
                     <p className="text-xs text-slate-400">Balance</p>
                     <p
                       className={`text-sm font-semibold ${
@@ -860,16 +860,16 @@ export default function Dashboard() {
                 </div>
 
                 <div className="mt-6 grid gap-6 lg:grid-cols-2">
-                  <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                  <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-white">စာရင်းအသစ်သွင်းရန်</h3>
                     <form className="mt-4 space-y-4" onSubmit={createLedgerTransaction}>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="flex p-1 bg-slate-900 rounded-lg border border-slate-800 mb-2">
                         <button
                           type="button"
-                          className={`min-h-12 rounded-md border py-2 text-sm font-medium transition ${
+                          className={`flex-1 py-2.5 text-sm font-semibold rounded-md transition-all ${
                             ledgerForm.type === "CREDIT"
-                              ? "border-rose-500 bg-rose-500/10 text-rose-400"
-                              : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                              ? "bg-rose-600 text-white shadow-lg"
+                              : "text-slate-400 hover:text-slate-200"
                           }`}
                           onClick={() => setLedgerForm({ ...ledgerForm, type: "CREDIT" })}
                           disabled={isSubmitting}
@@ -878,10 +878,10 @@ export default function Dashboard() {
                         </button>
                         <button
                           type="button"
-                          className={`min-h-12 rounded-md border py-2 text-sm font-medium transition ${
+                          className={`flex-1 py-2.5 text-sm font-semibold rounded-md transition-all ${
                             ledgerForm.type === "DEBIT"
-                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-400"
-                              : "border-slate-700 bg-slate-800 text-slate-400 hover:border-slate-500"
+                              ? "bg-emerald-600 text-white shadow-lg"
+                              : "text-slate-400 hover:text-slate-200"
                           }`}
                           onClick={() => setLedgerForm({ ...ledgerForm, type: "DEBIT" })}
                           disabled={isSubmitting}
@@ -890,23 +890,23 @@ export default function Dashboard() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">ရက်စွဲ (ရွေးချယ်ရန်)</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ရက်စွဲ</label>
                           <input
                             type="date"
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                             value={ledgerForm.date}
                             onChange={(e) => setLedgerForm({ ...ledgerForm, date: e.target.value })}
                             disabled={isSubmitting}
                           />
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-xs text-slate-400">ပမာဏ (Ks)</label>
+                        <div className="space-y-1.5">
+                          <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ပမာဏ (Ks)</label>
                           <input
                             type="number"
-                            className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
-                            placeholder="Amount"
+                            className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+                            placeholder="0"
                             value={ledgerForm.amount}
                             onChange={(e) => setLedgerForm({ ...ledgerForm, amount: e.target.value })}
                             required
@@ -918,7 +918,7 @@ export default function Dashboard() {
                       <div className="space-y-1">
                         <label className="text-xs text-slate-400">ငွေပေးချေမှုပုံစံ</label>
                         <select
-                          className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                          className="w-full h-12 rounded-lg border border-slate-700 bg-slate-900/50 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                           value={ledgerForm.paymentType}
                           onChange={(e) => setLedgerForm({ ...ledgerForm, paymentType: e.target.value })}
                           disabled={isSubmitting}
@@ -932,7 +932,7 @@ export default function Dashboard() {
                       </div>
 
                       <textarea
-                        className="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+                        className="w-full rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all"
                         placeholder="မှတ်စု (Note)"
                         rows="2"
                         value={ledgerForm.note}
@@ -1105,7 +1105,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <label className="text-xs text-slate-400 font-medium">Customer Name</label>
                 <input
-                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
                   required
@@ -1115,7 +1115,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <label className="text-xs text-slate-400 font-medium">Phone Number</label>
                 <input
-                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   disabled={isSubmitting}
@@ -1124,7 +1124,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <label className="text-xs text-slate-400 font-medium">Route / Tag</label>
                 <input
-                  className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+                  className="w-full h-12 rounded-xl border border-slate-800 bg-slate-900 px-4 text-sm text-white outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all shadow-inner"
                   value={editForm.routeTag}
                   onChange={(e) => setEditForm({ ...editForm, routeTag: e.target.value })}
                   disabled={isSubmitting}
