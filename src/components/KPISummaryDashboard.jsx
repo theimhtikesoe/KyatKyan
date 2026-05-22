@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
  * KPISummaryDashboard Component
  * 
  * Displays key business metrics:
- * - Today's Revenue (ဒီနေ့ ရရှိတဲ့ ငွေ): Sum of DEBIT transactions from today
+ * - Today&apos;s Revenue (ဒီနေ့ ရရှိတဲ့ ငွေ): Sum of DEBIT transactions from today
  * - Total Outstanding Debt (စုစုပေါင်း ရရန်ရှိ အကြွေး): Sum of CREDIT transactions
  * 
  * Features:
@@ -75,7 +75,7 @@ export default function KPISummaryDashboard() {
     loadData();
   }, []);
 
-  // Calculate Today's Revenue (DEBIT transactions from today)
+  // Calculate Today&apos;s Revenue (DEBIT transactions from today)
   const todaysRevenue = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -125,12 +125,12 @@ export default function KPISummaryDashboard() {
 
   return (
     <section className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 mb-6">
-      {/* Today's Revenue Card */}
+      {/* Today&apos;s Revenue Card */}
       <div className="rounded-2xl border border-slate-700 bg-gradient-to-br from-slate-900 to-slate-800 p-6 shadow-xl transition hover:shadow-2xl">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400">ဒီနေ့ ရရှိတဲ့ ငွေ</p>
-            <p className="text-xs text-slate-500 mt-1">Today's Revenue</p>
+            <p className="text-xs text-slate-500 mt-1">Today&apos;s Revenue</p>
           </div>
           <div className="rounded-lg bg-emerald-950/40 p-2">
             <svg
