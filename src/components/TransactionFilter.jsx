@@ -151,8 +151,8 @@ export default function TransactionFilter({
       </div>
 
       {/* Custom Date Range Selectors */}
-      <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-xs text-slate-400 font-medium">
             Custom Range:
           </label>
@@ -160,7 +160,7 @@ export default function TransactionFilter({
             type="date"
             value={startDate}
             onChange={handleStartDateChange}
-            className="bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+            className="flex-1 min-w-[130px] bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
             placeholder="Start Date"
           />
           <span className="text-slate-500 text-sm font-medium">မှ</span>
@@ -168,7 +168,7 @@ export default function TransactionFilter({
             type="date"
             value={endDate}
             onChange={handleEndDateChange}
-            className="bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+            className="flex-1 min-w-[130px] bg-slate-800 border border-slate-700 text-sm text-white rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
             placeholder="End Date"
           />
         </div>
