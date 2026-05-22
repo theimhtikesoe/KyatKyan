@@ -97,6 +97,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [loadingCustomer, setLoadingCustomer] = useState(false);
+  const [showCustomerList, setShowCustomerList] = useState(true);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -729,7 +730,7 @@ export default function Dashboard() {
                       ? "border-cyan-500 bg-cyan-500/5 ring-1 ring-cyan-500/20"
                       : "border-slate-200 bg-slate-50/40 hover:border-slate-300 hover:bg-slate-50/60"
                   }`}
-                  onClick={() => setSelectedCustomerId(customer.id)}
+                  onClick={() => { setSelectedCustomerId(customer.id); setShowCustomerList(false); }}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -816,6 +817,8 @@ export default function Dashboard() {
                   Next
                 </button>
               </div>
+            </div>
+          )}
             </div>
           )}
 
