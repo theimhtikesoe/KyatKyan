@@ -39,6 +39,7 @@ model Ledger {
   deductions  Int      @default(0)
   amount      Int
   note        String?
+  paymentType String?
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
 

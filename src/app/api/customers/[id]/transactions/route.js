@@ -51,6 +51,7 @@ export async function POST(request, { params }) {
           deductions,
           amount,
           note: body.note?.trim() || null,
+          paymentType: body.paymentType || null,
           date: body.date ? new Date(body.date) : new Date(),
         },
         select: {
@@ -64,6 +65,7 @@ export async function POST(request, { params }) {
           deductions: true,
           amount: true,
           note: true,
+          paymentType: true,
         },
       });
 

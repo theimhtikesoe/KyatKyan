@@ -492,28 +492,10 @@ export default function Dashboard() {
         <header className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm text-cyan-300">LatYar Ledger & KPay Automation</p>
+              <p className="text-sm text-cyan-300">LatYar Ledger Dashboard</p>
               <h1 className="mt-1 text-2xl font-semibold text-white sm:text-3xl">
-                KPay ဝင်ငွေစစ်ဆေးရေး Dashboard
+                Customer စာရင်းချုပ်
               </h1>
-            </div>
-            <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-              <div className="rounded-md border border-slate-800 px-4 py-3">
-                <p className="text-slate-400">Pending KPay</p>
-                <p className="mt-1 text-lg font-semibold text-amber-300">{pendingKpay.length}</p>
-              </div>
-              <div className="rounded-md border border-slate-800 px-4 py-3">
-                <p className="text-slate-400">Pending Total</p>
-                <p className="mt-1 text-lg font-semibold text-cyan-300">
-                  {formatMoney(totalPending)}
-                </p>
-              </div>
-              <div className="rounded-md border border-slate-800 px-4 py-3">
-                <p className="text-slate-400">Status</p>
-                <p className="mt-1 text-lg font-semibold text-emerald-300">
-                  {loading ? "Loading" : "Online"}
-                </p>
-              </div>
             </div>
           </div>
           {message ? (
@@ -575,67 +557,18 @@ export default function Dashboard() {
           ) : null}
         </section>
 
-        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Unverified KPay Bucket</h2>
-              <p className="text-sm text-slate-400">
-                MacroDroid webhook မှဝင်လာပြီး customer နဲ့ မတွဲရသေးသောငွေများ
-              </p>
-            </div>
-            <button
-              className="min-h-11 rounded-md border border-slate-700 px-4 py-2 text-sm text-slate-200 hover:border-cyan-500 hover:text-cyan-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => loadDashboard()}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Refreshing..." : "Refresh"}
-            </button>
-          </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {pendingKpay.length ? (
-              pendingKpay.map((item) => (
-                <article
-                  key={item.id}
-                  className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xl font-semibold text-amber-200">
-                        {formatMoney(item.amount)}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">{formatDate(item.createdAt)}</p>
-                    </div>
-                    <span className="rounded-full bg-amber-400/10 px-2 py-1 text-xs text-amber-200">
-                      PENDING
-                    </span>
-                  </div>
-                  <p className="mt-3 line-clamp-3 whitespace-pre-line text-sm text-slate-300">
-                    {item.raw_text}
-                  </p>
-                  {item.suggestedCustomer ? (
-                    <p className="mt-3 rounded-md border border-cyan-500/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
-                      {item.suggestedCustomer.name} နှင့် တွဲရန် အကြံပြုထားပါသည်
-                    </p>
-                  ) : null}
-                  <button
-                    className="mt-3 w-full rounded-md border border-cyan-500/50 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => setMatchingKpay(item)}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Processing..." : "Match"}
-                  </button>
-                </article>
-              ))
-            ) : (
-              <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
-                Pending KPay မရှိပါ။
-              </p>
-            )}
-          </div>
-        </section>
 
         <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
+          <div className="mb-4">
+            <input
+              type="text"
+              className="w-full min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base text-white outline-none focus:border-cyan-400"
+              placeholder="Customer ရှာဖွေရန် (အမည် သို့မဟုတ် ဖုန်းနံပါတ်)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
             {customers.length ? (
               customers.map((customer) => (
@@ -737,39 +670,73 @@ export default function Dashboard() {
                 </div>
 
                 <form
-                  className="mt-6 grid gap-3 rounded-lg border border-slate-800 p-3 sm:p-4 md:grid-cols-[160px_1fr_1fr_auto]"
+                  className="mt-6 grid gap-3 rounded-lg border border-slate-800 p-3 sm:p-4"
                   onSubmit={createLedgerTransaction}
                 >
-                  <select
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                    value={ledgerForm.type}
-                    onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
-                    disabled={isSubmitting}
-                  >
-                    <option value="CREDIT">အကြွေးတိုး</option>
-                    <option value="DEBIT">ငွေချေ</option>
-                  </select>
-                  <input
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                    inputMode="numeric"
-                    placeholder="ငွေပမာဏ"
-                    value={ledgerForm.amount}
-                    onChange={(event) => setLedgerForm({ ...ledgerForm, amount: event.target.value })}
-                    disabled={isSubmitting}
-                  />
-                  <input
-                    className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
-                    placeholder="မှတ်ချက်"
-                    value={ledgerForm.note}
-                    onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
-                    disabled={isSubmitting}
-                  />
-                  <button 
-                    className="min-h-12 rounded-md bg-cyan-400 px-4 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Saving..." : "Save"}
-                  </button>
+                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                    <select
+                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                      value={ledgerForm.type}
+                      onChange={(event) => setLedgerForm({ ...ledgerForm, type: event.target.value })}
+                      disabled={isSubmitting}
+                    >
+                      <option value="CREDIT">အကြွေးတိုး</option>
+                      <option value="DEBIT">ငွေချေ</option>
+                    </select>
+                    <input
+                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                      inputMode="numeric"
+                      placeholder="ငွေပမာဏ"
+                      value={ledgerForm.amount}
+                      onChange={(event) => setLedgerForm({ ...ledgerForm, amount: event.target.value })}
+                      disabled={isSubmitting}
+                      required
+                    />
+                    <input
+                      type="date"
+                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                      value={ledgerForm.date}
+                      onChange={(event) => setLedgerForm({ ...ledgerForm, date: event.target.value })}
+                      disabled={isSubmitting}
+                    />
+                    <input
+                      className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 md:text-sm disabled:opacity-50"
+                      placeholder="မှတ်ချက်"
+                      value={ledgerForm.note}
+                      onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    {ledgerForm.type === "DEBIT" && (
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-slate-400">Payment Type:</span>
+                        <div className="flex gap-2">
+                          {["Kpay", "Mobile Banking", "Wave"].map((type) => (
+                            <button
+                              key={type}
+                              type="button"
+                              className={`rounded-md border px-3 py-1.5 text-xs font-medium transition ${
+                                ledgerForm.paymentType === type
+                                  ? "border-cyan-400 bg-cyan-400/10 text-cyan-200"
+                                  : "border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500"
+                              }`}
+                              onClick={() => setLedgerForm({ ...ledgerForm, paymentType: type })}
+                              disabled={isSubmitting}
+                            >
+                              {type}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <button 
+                      className="min-h-12 rounded-md bg-cyan-400 px-8 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 md:text-sm disabled:opacity-50 disabled:cursor-not-allowed md:ml-auto"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </button>
+                  </div>
                 </form>
 
                 <div className="mt-6 overflow-x-auto rounded-lg border border-slate-800">
@@ -779,7 +746,7 @@ export default function Dashboard() {
                         <th className="px-4 py-3 font-medium">Date</th>
                         <th className="px-4 py-3 font-medium">Type</th>
                         <th className="px-4 py-3 text-right font-medium">Amount</th>
-                        <th className="px-4 py-3 font-medium">Note</th>
+                        <th className="px-4 py-3 font-medium">Payment/Note</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
@@ -788,19 +755,32 @@ export default function Dashboard() {
                           <td className="px-4 py-3 text-slate-300">{formatDate(transaction.date)}</td>
                           <td className="px-4 py-3">
                             <span
-                              className={`rounded-full px-2 py-1 text-xs ${
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                                 transaction.type === "CREDIT"
-                                  ? "bg-emerald-400/10 text-emerald-200"
-                                  : "bg-rose-400/10 text-rose-200"
+                                  ? "bg-rose-400/10 text-rose-300"
+                                  : "bg-emerald-400/10 text-emerald-300"
                               }`}
                             >
-                              {transaction.type}
+                              {transaction.type === "CREDIT" ? "အကြွေးတိုး" : "ငွေချေ"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-white">
+                          <td
+                            className={`px-4 py-3 text-right font-semibold ${
+                              transaction.type === "CREDIT" ? "text-rose-200" : "text-emerald-200"
+                            }`}
+                          >
                             {formatMoney(transaction.amount)}
                           </td>
-                          <td className="px-4 py-3 text-slate-400">{transaction.note || "-"}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-0.5">
+                              {transaction.paymentType && (
+                                <span className="text-[10px] font-medium text-cyan-300">
+                                  [{transaction.paymentType}]
+                                </span>
+                              )}
+                              <span className="text-slate-400">{transaction.note || "-"}</span>
+                            </div>
+                          </td>
                         </tr>
                       ))}
                       {!(selectedCustomer.ledgers || []).length ? (
@@ -822,185 +802,7 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-800 bg-slate-950 p-4 sm:p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Tools & Reports</h2>
-            <button
-              className="rounded-md border border-slate-700 px-3 py-1.5 text-xs font-medium text-cyan-300 hover:border-cyan-500 hover:bg-cyan-950/30"
-              onClick={() => setShowExtraTools(!showExtraTools)}
-            >
-              {showExtraTools ? "Hide Extra Tools" : "Show Extra Tools"}
-            </button>
-          </div>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[
-              ["kpay", "KPay Auto-Suggestion"],
-              ...(showExtraTools ? [
-                ["sales", "လက်လီ/လက်ကား အဝင်ဖောင်"],
-                ["reports", "စက်ရုံချုပ် စာရင်းချုပ်"]
-              ] : [])
-            ].map(([id, label]) => (
-              <button
-                key={id}
-                className={`min-h-12 rounded-md border px-3 py-2 text-sm font-medium transition ${
-                  activeTab === id
-                    ? "border-cyan-400 bg-cyan-400/10 text-cyan-100"
-                    : "border-slate-800 bg-slate-900/50 text-slate-300 hover:border-slate-600"
-                }`}
-                onClick={() => {
-                  setActiveTab(id);
-                  if (id === "reports" && !report) loadReport(reportDate);
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === "sales" ? (
-            <form className="mt-4 grid gap-3 lg:grid-cols-4" onSubmit={createSalesLedger}>
-              <select
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                value={ledgerForm.saleType}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, saleType: event.target.value })}
-                disabled={isSubmitting}
-              >
-                <option value="RETAIL">လက်လီ</option>
-                <option value="WHOLESALE">လက်ကား</option>
-              </select>
-              <select
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                value={ledgerForm.itemSize}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, itemSize: event.target.value })}
-                disabled={isSubmitting}
-              >
-                <option value="">ပစ္စည်း Size</option>
-                <option value=".5">.5</option>
-                <option value=".85">.85</option>
-                <option value="1L">1L</option>
-                <option value="20L">20L</option>
-              </select>
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="ကတ် အရေအတွက်"
-                inputMode="numeric"
-                value={ledgerForm.cartons}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, cartons: event.target.value })}
-                disabled={isSubmitting}
-              />
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="တစ်ကတ်နှုန်း"
-                inputMode="numeric"
-                value={ledgerForm.rate}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, rate: event.target.value })}
-                disabled={isSubmitting}
-              />
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="Tube/ကား/အိတ် စရိတ်"
-                inputMode="numeric"
-                value={ledgerForm.deductions}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, deductions: event.target.value })}
-                disabled={isSubmitting}
-              />
-              <input
-                className="min-h-12 rounded-md border border-slate-700 bg-slate-900 px-4 py-3 text-base outline-none focus:border-cyan-400 disabled:opacity-50"
-                placeholder="မှတ်ချက်"
-                value={ledgerForm.note}
-                onChange={(event) => setLedgerForm({ ...ledgerForm, note: event.target.value })}
-                disabled={isSubmitting}
-              />
-              <div className="rounded-md border border-slate-800 px-4 py-3">
-                <p className="text-xs text-slate-400">အသားတင် အကြွေးတိုး</p>
-                <p className="mt-1 text-lg font-semibold text-cyan-200">{formatMoney(computedSaleAmount)}</p>
-              </div>
-              <button 
-                className="min-h-12 rounded-md bg-cyan-400 px-5 py-3 text-base font-semibold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Saving..." : "Save Sale"}
-              </button>
-            </form>
-          ) : null}
-
-          {activeTab === "kpay" ? (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {pendingKpay.map((item) => (
-                <div key={item.id} className="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-white">{formatMoney(item.amount)}</p>
-                      <p className="mt-1 text-sm text-slate-400">{item.kpayName || "Unknown KPay name"}</p>
-                    </div>
-                    <span className="rounded-md bg-amber-400/10 px-2 py-1 text-xs text-amber-200">PENDING</span>
-                  </div>
-                  {item.suggestedCustomer ? (
-                    <p className="mt-3 rounded-md border border-cyan-500/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
-                      {item.suggestedCustomer.name} နှင့် တွဲရန် အကြံပြုထားပါသည်
-                    </p>
-                  ) : null}
-                  <button
-                    className="mt-3 w-full rounded-md border border-cyan-500/50 bg-cyan-400/10 px-3 py-2 text-sm font-medium text-cyan-200 hover:bg-cyan-400/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => setMatchingKpay(item)}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Processing..." : "Match"}
-                  </button>
-                </div>
-              ))}
-              {!pendingKpay.length ? (
-                <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">Pending KPay မရှိပါ။</p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {activeTab === "reports" ? (
-            <div className="mt-4">
-              <div className="mb-4 flex items-end gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300">Report Date</label>
-                  <input
-                    type="date"
-                    className="mt-1 min-h-11 rounded-md border border-slate-700 bg-slate-900 px-4 py-2 text-white outline-none focus:border-cyan-400"
-                    value={reportDate}
-                    onChange={(e) => setReportDate(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {report ? (
-                <div className="rounded-lg border border-slate-800 p-4">
-                  <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                    <div className="rounded-md border border-slate-700 p-3">
-                      <p className="text-xs text-slate-400">Total Credit</p>
-                      <p className="mt-1 text-lg font-semibold text-emerald-200">
-                        {formatMoney(report.totalCredit || 0)}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-slate-700 p-3">
-                      <p className="text-xs text-slate-400">Total Debit</p>
-                      <p className="mt-1 text-lg font-semibold text-rose-200">
-                        {formatMoney(report.totalDebit || 0)}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-slate-700 p-3">
-                      <p className="text-xs text-slate-400">Net Balance</p>
-                      <p className="mt-1 text-lg font-semibold text-cyan-200">
-                        {formatMoney((report.totalCredit || 0) - (report.totalDebit || 0))}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
-                  Loading report...
-                </p>
-              )}
-            </div>
-          ) : null}
-        </section>
 
         {editingCustomer ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

@@ -106,6 +106,7 @@ export async function ensureDatabase() {
           "deductions" INTEGER NOT NULL DEFAULT 0,
           "amount" INTEGER NOT NULL,
           "note" TEXT,
+          "paymentType" TEXT,
           "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
           CONSTRAINT "Ledger_customerId_fkey"
             FOREIGN KEY ("customerId") REFERENCES "Customer" ("id")
@@ -135,6 +136,7 @@ export async function ensureDatabase() {
       await setupQuery(
         `ALTER TABLE "UnverifiedKpay" ADD COLUMN IF NOT EXISTS "suggestedCustomerId" UUID`,
       );
+      await setupQuery(`ALTER TABLE "Ledger" ADD COLUMN IF NOT EXISTS "paymentType" TEXT`);
 
       // Create indexes for faster queries
       await setupQuery(`CREATE INDEX IF NOT EXISTS "Ledger_customerId_idx" ON "Ledger"("customerId")`);
