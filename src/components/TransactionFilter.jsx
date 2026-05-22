@@ -182,15 +182,10 @@ export default function TransactionFilter({
             Reset
           </button>
         )}
-        </div>
-
-        {/* Extra Actions (e.g., Export Button) */}
-        {extraActions && (
-          <div className="flex items-center">
-            {extraActions}
-          </div>
-        )}
       </div>
+
+      {/* Extra Actions (e.g., Export Button) */}
+      {extraActions && <div className="flex items-center">{extraActions}</div>}
     </div>
   );
 }
