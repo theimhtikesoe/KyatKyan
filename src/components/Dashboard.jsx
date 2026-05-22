@@ -863,7 +863,7 @@ export default function Dashboard() {
                   <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-6 shadow-sm">
                     <h3 className="text-lg font-semibold text-white">စာရင်းအသစ်သွင်းရန်</h3>
                     <form className="mt-4 space-y-4" onSubmit={createLedgerTransaction}>
-                      <div className="flex p-1 bg-slate-900 rounded-lg border border-slate-800 mb-2">
+                      <div className="flex p-1 bg-slate-900/80 rounded-xl border border-slate-800 mb-4 shadow-inner">
                         <button
                           type="button"
                           className={`flex-1 py-2.5 text-sm font-semibold rounded-md transition-all ${
@@ -890,7 +890,7 @@ export default function Dashboard() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className="text-[11px] uppercase tracking-wider font-bold text-slate-500 ml-1">ရက်စွဲ</label>
                           <input
