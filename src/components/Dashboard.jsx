@@ -716,24 +716,24 @@ export default function Dashboard() {
         <section className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 p-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {/* Total Balance */}
-            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">စုစုပေါင်း အကြွေး</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{formatMoney(totalBalance)}</p>
-              <p className="mt-1 text-xs text-slate-500">Total Balance</p>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-rose-600 uppercase tracking-wide">စုစုပေါင်း အကြွေး</p>
+              <p className="mt-2 text-2xl font-bold text-rose-700">{formatMoney(totalBalance)}</p>
+              <p className="mt-1 text-xs text-rose-500">Total Balance</p>
             </div>
 
             {/* Customer Count */}
-            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Customer အရေအတွက်</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{customerCount}</p>
-              <p className="mt-1 text-xs text-slate-500">Total Customers</p>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">Customer အရေအတွက်</p>
+              <p className="mt-2 text-2xl font-bold text-blue-700">{customerCount}</p>
+              <p className="mt-1 text-xs text-blue-500">Total Customers</p>
             </div>
 
             {/* Today&apos;s Transactions */}
-            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">{todayTransactions}</p>
-              <p className="mt-1 text-xs text-slate-500">Today&apos;s Transactions</p>
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
+              <p className="mt-2 text-2xl font-bold text-emerald-700">{todayTransactions}</p>
+              <p className="mt-1 text-xs text-emerald-500">Today&apos;s Transactions</p>
             </div>
           </div>
         </section>
