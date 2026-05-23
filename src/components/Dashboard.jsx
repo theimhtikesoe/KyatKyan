@@ -103,6 +103,7 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredLedgers, setFilteredLedgers] = useState([]);
   const [highlightedCustomerId, setHighlightedCustomerId] = useState(null);
+  const [todayTransactionCount, setTodayTransactionCount] = useState(0);
 
 
   // Show alert notification
@@ -196,6 +197,36 @@ export default function Dashboard() {
     () => pendingKpay.reduce((sum, item) => sum + item.amount, 0),
     [pendingKpay],
   );
+
+  // Calculate summary metrics
+  const totalBalance = useMemo(
+    () => customers.reduce((sum, customer) => sum + (customer.current_balance || 0), 0),
+    [customers],
+  );
+
+  const customerCount = useMemo(
+    () => customers.length,
+    [customers],
+  );
+
+  // Calculate today's transactions
+  const todayTransactions = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    let count = 0;
+    customers.forEach(customer => {
+      if (customer.ledgers) {
+        count += customer.ledgers.filter(ledger => {
+          const ledgerDate = new Date(ledger.date);
+          return ledgerDate >= todayStart && ledgerDate < todayEnd;
+        }).length;
+      }
+    });
+    return count;
+  }, [customers]);
 
   // Pagination logic
   const paginatedCustomers = useMemo(() => {
@@ -649,6 +680,32 @@ export default function Dashboard() {
         </header>
 
         {/* <KPISummaryDashboard /> */}
+
+        {/* Compact Summary Box */}
+        <section className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Total Balance */}
+            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">စုစုပေါင်း အကြွေး</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{formatMoney(totalBalance)}</p>
+              <p className="mt-1 text-xs text-slate-500">Total Balance</p>
+            </div>
+
+            {/* Customer Count */}
+            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">Customer အရေအတွက်</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{customerCount}</p>
+              <p className="mt-1 text-xs text-slate-500">Total Customers</p>
+            </div>
+
+            {/* Today's Transactions */}
+            <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
+              <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{todayTransactions}</p>
+              <p className="mt-1 text-xs text-slate-500">Today's Transactions</p>
+            </div>
+          </div>
+        </section>
 
         <section className="rounded-lg border border-cyan-500/30 bg-white p-4">
           <button
