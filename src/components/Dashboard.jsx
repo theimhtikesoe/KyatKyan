@@ -103,6 +103,7 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredLedgers, setFilteredLedgers] = useState([]);
   const [highlightedCustomerId, setHighlightedCustomerId] = useState(null);
+  const [allLedgers, setAllLedgers] = useState([]);
 
 
   // Show alert notification
@@ -125,6 +126,15 @@ export default function Dashboard() {
       setCustomers(customerRows);
       setPendingKpay(kpayRows);
       setMessage("");
+      
+      // Collect all ledgers from all customers
+      const allLedgersData = [];
+      for (const customer of customerRows) {
+        if (customer.ledgers && Array.isArray(customer.ledgers)) {
+          allLedgersData.push(...customer.ledgers);
+        }
+      }
+      setAllLedgers(allLedgersData);
     } catch (error) {
       setMessage(error.message);
       showAlert(error.message, "error");
@@ -637,6 +647,28 @@ export default function Dashboard() {
     return cartons * rate - deductions;
   }, [ledgerForm.cartons, ledgerForm.rate, ledgerForm.deductions, ledgerForm.type, ledgerForm.saleType]);
 
+  // Calculate KPI metrics
+  const kpiMetrics = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const todaysTransactions = allLedgers.filter(ledger => {
+      const ledgerDate = new Date(ledger.date);
+      return ledgerDate >= todayStart && ledgerDate <= todayEnd;
+    });
+
+    const totalBalance = customers.reduce((sum, customer) => sum + (customer.current_balance || 0), 0);
+    const totalCustomers = customers.length;
+
+    return {
+      todaysTransactionCount: todaysTransactions.length,
+      totalBalance,
+      totalCustomers,
+    };
+  }, [allLedgers, customers]);
+
   // Handle filter changes from TransactionFilter component
   const handleFilterChange = useCallback((filtered) => {
     setFilteredLedgers(filtered);
@@ -678,7 +710,68 @@ export default function Dashboard() {
           ) : null}
         </header>
 
-        {/* <KPISummaryDashboard /> */}
+        {/* KPI Summary Cards */}
+        <section className="grid gap-4 sm:grid-cols-1 md:grid-cols-3 mb-6">
+          {/* Total Balance Card */}
+          <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-rose-50 to-rose-100/50 p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">စုစုပေါင်း အကြွေး</p>
+                <p className="text-xs text-slate-500 mt-1">Total Balance</p>
+              </div>
+              <div className="rounded-lg bg-rose-200 p-2">
+                <svg className="h-5 w-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-2xl font-bold text-rose-700">
+                {formatMoney(kpiMetrics.totalBalance)}
+              </p>
+            </div>
+          </div>
+
+          {/* Total Customers Card */}
+          <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-blue-50 to-blue-100/50 p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">CUSTOMER စုစုပေါင်း</p>
+                <p className="text-xs text-slate-500 mt-1">Total Customers</p>
+              </div>
+              <div className="rounded-lg bg-blue-200 p-2">
+                <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.856-1.487M15 10a3 3 0 11-6 0 3 3 0 016 0zM6 20a6 6 0 0112 0v2H6v-2z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-2xl font-bold text-blue-700">
+                {kpiMetrics.totalCustomers}
+              </p>
+            </div>
+          </div>
+
+          {/* Today's Transactions Card */}
+          <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">ယနေ့ TRANSACTION များ</p>
+                <p className="text-xs text-slate-500 mt-1">Today's Transactions</p>
+              </div>
+              <div className="rounded-lg bg-emerald-200 p-2">
+                <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-2xl font-bold text-emerald-700">
+                {kpiMetrics.todaysTransactionCount}
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Compact Summary Box */}
         <section className="rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 p-4">
