@@ -38,7 +38,7 @@ export default function PINLogin({ onSuccess }) {
       setError('');
       onSuccess?.();
     } else {
-      setError('မှားသော PIN code ။ ထပ်မံ시도ပါ။');
+      setError('PIN code မှားနေပါသည်။ ထပ်မံ ကြိုးစားကြည့်ပါ။');
       setPin('');
     }
   };
