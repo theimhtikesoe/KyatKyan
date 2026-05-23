@@ -103,7 +103,6 @@ export default function Dashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredLedgers, setFilteredLedgers] = useState([]);
   const [highlightedCustomerId, setHighlightedCustomerId] = useState(null);
-  const [todayTransactionCount, setTodayTransactionCount] = useState(0);
 
 
   // Show alert notification
@@ -702,7 +701,7 @@ export default function Dashboard() {
             <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
               <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{todayTransactions}</p>
-              <p className="mt-1 text-xs text-slate-500">Today's Transactions</p>
+              <p className="mt-1 text-xs text-slate-500">Today&apos;s Transactions</p>
             </div>
           </div>
         </section>
