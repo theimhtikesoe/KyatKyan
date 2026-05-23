@@ -752,12 +752,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Today's Transactions Card */}
+          {/* Today&apos;s Transactions Card */}
           <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-5 shadow-sm">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-600">ယနေ့ TRANSACTION များ</p>
-                <p className="text-xs text-slate-500 mt-1">Today's Transactions</p>
+                <p className="text-xs text-slate-500 mt-1">Today&apos;s Transactions</p>
               </div>
               <div className="rounded-lg bg-emerald-200 p-2">
                 <svg className="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -790,7 +790,7 @@ export default function Dashboard() {
               <p className="mt-1 text-xs text-slate-500">Total Customers</p>
             </div>
 
-            {/* Today's Transactions */}
+            {/* Today&apos;s Transactions */}
             <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
               <p className="text-xs font-medium text-slate-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
               <p className="mt-2 text-2xl font-bold text-slate-900">{todayTransactions}</p>
