@@ -53,21 +53,31 @@ export async function POST(request) {
       return NextResponse.json({ error: "name is required" }, { status: 400 });
     }
 
-    const customer = await prisma.customer.create({
-      data: {
-        name,
-        phone: body.phone?.trim() || null,
-        routeTag: body.routeTag?.trim() || null,
-        current_balance: Number(body.current_balance || 0),
-      },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        routeTag: true,
-        current_balance: true,
-        createdAt: true,
-      },
+    const currentBalance = Number(body.current_balance || 0);
+    const customer = await prisma.$transaction(async (tx) => {
+      const newCustomer = await tx.customer.create({
+        data: {
+          name,
+          phone: body.phone?.trim() || null,
+          routeTag: body.routeTag?.trim() || null,
+          current_balance: currentBalance,
+        },
+      });
+
+      if (currentBalance !== 0) {
+        await tx.ledger.create({
+          data: {
+            customerId: newCustomer.id,
+            type: currentBalance > 0 ? "CREDIT" : "DEBIT",
+            saleType: "RETAIL",
+            amount: Math.abs(currentBalance),
+            note: "အစ လက်ကျန် အကြွေး (Opening Balance)",
+            date: new Date(),
+          },
+        });
+      }
+
+      return newCustomer;
     });
 
     return NextResponse.json({ data: customer }, { status: 201 });

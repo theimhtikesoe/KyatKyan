@@ -305,6 +305,7 @@ export default function Dashboard() {
       
       // Optimistic Update: Add new customer to the list immediately
       setCustomers(prev => [customer, ...prev]);
+      setAllCustomersForKPI(prev => [customer, ...prev]);
       setNewCustomer({ name: "", phone: "", routeTag: "", current_balance: "" });
       setSelectedCustomerId(customer.id);
       setShowAddCustomer(false);
@@ -341,6 +342,11 @@ export default function Dashboard() {
       setCustomers(prev =>
         prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
       );
+
+      // Also update allCustomersForKPI to reflect in summary metrics
+      setAllCustomersForKPI(prev =>
+        prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
+      );
       
       const result = await api(`/api/customers/${selectedCustomerId}/transactions`, {
         method: "POST",
@@ -367,6 +373,15 @@ export default function Dashboard() {
         
         // Also update the customer in the main list to reflect in "Today's Transactions"
         setCustomers(prev =>
+          prev.map(c => 
+            c.id === selectedCustomerId 
+              ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
+              : c
+          )
+        );
+
+        // Also update allCustomersForKPI to reflect in summary metrics
+        setAllCustomersForKPI(prev =>
           prev.map(c => 
             c.id === selectedCustomerId 
               ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
@@ -494,6 +509,11 @@ export default function Dashboard() {
       setCustomers(prev =>
         prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
       );
+
+      // Also update allCustomersForKPI to reflect in summary metrics
+      setAllCustomersForKPI(prev =>
+        prev.map(c => c.id === selectedCustomerId ? { ...c, current_balance: newBalance } : c)
+      );
       
       const result = await api(`/api/customers/${selectedCustomerId}/transactions`, {
         method: "POST",
@@ -517,6 +537,15 @@ export default function Dashboard() {
         
         // Also update the customer in the main list to reflect in "Today's Transactions"
         setCustomers(prev =>
+          prev.map(c => 
+            c.id === selectedCustomerId 
+              ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
+              : c
+          )
+        );
+
+        // Also update allCustomersForKPI to reflect in summary metrics
+        setAllCustomersForKPI(prev =>
           prev.map(c => 
             c.id === selectedCustomerId 
               ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
@@ -573,23 +602,22 @@ export default function Dashboard() {
       setPendingKpay(prev => prev.filter(k => k.id !== matchingKpay.id));
       
       // Update customer balance and ledgers optimistically
-      setCustomers(prev =>
-        prev.map(c => 
-          c.id === customerId 
-            ? { 
-                ...c, 
-                current_balance: c.current_balance - kpayAmount,
-                ledgers: [{
-                  id: `temp-${Date.now()}`,
-                  type: 'DEBIT',
-                  amount: kpayAmount,
-                  date: new Date().toISOString(),
-                  note: `KPay Match: ${matchingKpay.kpayName}`
-                }, ...(c.ledgers || [])]
-              } 
-            : c
-        )
-      );
+      const updateFn = c => 
+        c.id === customerId 
+          ? { 
+              ...c, 
+              current_balance: c.current_balance - kpayAmount,
+              ledgers: [{
+                id: `temp-${Date.now()}`,
+                type: 'DEBIT',
+                amount: kpayAmount,
+                date: new Date().toISOString(),
+                note: `KPay Match: ${matchingKpay.kpayName}`
+              }, ...(c.ledgers || [])]
+            } 
+          : c;
+      setCustomers(prev => prev.map(updateFn));
+      setAllCustomersForKPI(prev => prev.map(updateFn));
       
       setMatchingKpay(null);
       setMatchCustomerId("");
@@ -624,13 +652,9 @@ export default function Dashboard() {
       setMessage("");
       
       // Optimistic Update: Update customer in list immediately
-      setCustomers(prev =>
-        prev.map(c =>
-          c.id === editingCustomer.id
-            ? { ...c, ...editForm }
-            : c
-        )
-      );
+      const updateFn = c => c.id === editingCustomer.id ? { ...c, ...editForm } : c;
+      setCustomers(prev => prev.map(updateFn));
+      setAllCustomersForKPI(prev => prev.map(updateFn));
       
       const customer = await api(`/api/customers/${editingCustomer.id}`, {
         method: "PATCH",
@@ -665,6 +689,7 @@ export default function Dashboard() {
       
       // Optimistic Update: Remove customer from list immediately
       setCustomers(prev => prev.filter(c => c.id !== deletingCustomer.id));
+      setAllCustomersForKPI(prev => prev.filter(c => c.id !== deletingCustomer.id));
       
       await api(`/api/customers/${deletingCustomer.id}`, {
         method: "DELETE",
@@ -699,6 +724,7 @@ export default function Dashboard() {
       
       setDeletedCustomers(prev => prev.filter(c => c.id !== customer.id));
       setCustomers(prev => [customer, ...prev]);
+      setAllCustomersForKPI(prev => [customer, ...prev]);
       showAlert(`Customer "${customer.name}" ကို ပြန်လည်ဆယ်ယူပြီးပါပြီ။`, "success");
     } catch (error) {
       showAlert(error.message, "error");
