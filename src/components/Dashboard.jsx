@@ -327,6 +327,15 @@ export default function Dashboard() {
           ...prev,
           ledgers: [result.ledger, ...(prev.ledgers || [])],
         }));
+        
+        // Also update the customer in the main list to reflect in "Today's Transactions"
+        setCustomers(prev =>
+          prev.map(c => 
+            c.id === selectedCustomerId 
+              ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
+              : c
+          )
+        );
       }
       
       // Clear form immediately after successful submission
@@ -400,6 +409,15 @@ export default function Dashboard() {
           ...prev,
           ledgers: [result.ledger, ...(prev.ledgers || [])],
         }));
+        
+        // Also update the customer in the main list to reflect in "Today's Transactions"
+        setCustomers(prev =>
+          prev.map(c => 
+            c.id === selectedCustomerId 
+              ? { ...c, ledgers: [result.ledger, ...(c.ledgers || [])] } 
+              : c
+          )
+        );
       }
       
       setLedgerForm({
@@ -449,11 +467,21 @@ export default function Dashboard() {
       // Optimistic Update: Remove matched KPay from pending list
       setPendingKpay(prev => prev.filter(k => k.id !== matchingKpay.id));
       
-      // Update customer balance optimistically
+      // Update customer balance and ledgers optimistically
       setCustomers(prev =>
         prev.map(c => 
           c.id === customerId 
-            ? { ...c, current_balance: c.current_balance - kpayAmount } 
+            ? { 
+                ...c, 
+                current_balance: c.current_balance - kpayAmount,
+                ledgers: [{
+                  id: `temp-${Date.now()}`,
+                  type: 'DEBIT',
+                  amount: kpayAmount,
+                  date: new Date().toISOString(),
+                  note: `KPay Match: ${matchingKpay.kpayName}`
+                }, ...(c.ledgers || [])]
+              } 
             : c
         )
       );
