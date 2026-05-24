@@ -73,6 +73,10 @@ export default function Dashboard() {
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [deletingCustomer, setDeletingCustomer] = useState(null);
   const [permanentDeletingCustomer, setPermanentDeletingCustomer] = useState(null);
+  const [deletingTransaction, setDeletingTransaction] = useState(null);
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pinValue, setPinValue] = useState("");
+  const [pinError, setPinError] = useState("");
   const [editForm, setEditForm] = useState({ name: "", phone: "", routeTag: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(24);
@@ -395,6 +399,74 @@ export default function Dashboard() {
       setIsSubmitting(false);
     }
   }
+
+  async function deleteTransaction(id) {
+    if (!id || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await api(`/api/transactions/${id}`, {
+        method: "DELETE",
+      });
+
+      // Update balance and transaction list
+      if (result) {
+        setSelectedCustomer((prev) => ({
+          ...prev,
+          current_balance: result.newBalance,
+          ledgers: prev.ledgers.filter((l) => l.id !== id),
+        }));
+
+        setCustomers((prev) =>
+          prev.map((c) =>
+            c.id === result.customerId
+              ? {
+                  ...c,
+                  current_balance: result.newBalance,
+                  ledgers: c.ledgers?.filter((l) => l.id !== id),
+                }
+              : c
+          )
+        );
+        
+        // Also update allCustomersForKPI to reflect in summary metrics
+        setAllCustomersForKPI(prev => 
+          prev.map(c => 
+            c.id === result.customerId 
+              ? { 
+                  ...c, 
+                  current_balance: result.newBalance,
+                  ledgers: c.ledgers?.filter(l => l.id !== id)
+                } 
+              : c
+          )
+        );
+      }
+
+      showAlert("Transaction ကို ဖျက်ပြီးပါပြီ။", "success");
+      setDeletingTransaction(null);
+    } catch (error) {
+      showAlert(error.message, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const handlePinSubmit = (e) => {
+    e.preventDefault();
+    const CORRECT_PIN = "126365";
+    if (pinValue === CORRECT_PIN) {
+      setPinError("");
+      setShowPinModal(false);
+      setPinValue("");
+      if (deletingTransaction) {
+        deleteTransaction(deletingTransaction.id);
+      }
+    } else {
+      setPinError("PIN code မှားနေပါသည်။ ထပ်မံ ကြိုးစားကြည့်ပါ။");
+      setPinValue("");
+    }
+  };
 
   async function createSalesLedger(event) {
     event.preventDefault();
@@ -1149,12 +1221,13 @@ export default function Dashboard() {
                           <th className="px-4 py-3 text-right">Amount</th>
                           <th className="px-4 py-3">Payment</th>
                           <th className="px-4 py-3">Note</th>
+                          <th className="px-4 py-3 text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-200 bg-white">
                         {filteredLedgers.length ? (
                           filteredLedgers.map((ledger) => (
-                            <tr key={ledger.id} className="hover:bg-slate-50/50">
+                            <tr key={ledger.id} className="hover:bg-slate-50/50 group">
                               <td className="whitespace-nowrap px-4 py-3 text-xs">
                                 {formatDate(ledger.date)}
                               </td>
@@ -1182,11 +1255,24 @@ export default function Dashboard() {
                               <td className="px-4 py-3 text-xs text-slate-600 max-w-[200px] truncate">
                                 {ledger.note || "-"}
                               </td>
+                              <td className="px-4 py-3 text-center">
+                                <button
+                                  onClick={() => setDeletingTransaction(ledger)}
+                                  className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                                  title="Delete transaction"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                  </svg>
+                                </button>
+                              </td>
                             </tr>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="5" className="px-4 py-8 text-center text-slate-500">
+                            <td colSpan="6" className="px-4 py-8 text-center text-slate-500">
                               Transaction မရှိသေးပါ။
                             </td>
                           </tr>
@@ -1468,6 +1554,119 @@ export default function Dashboard() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transaction Delete Confirmation Modal */}
+      {deletingTransaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-xl border border-rose-200 bg-white p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </div>
+            <h3 className="mt-4 text-xl font-semibold text-slate-900">Transaction ဖျက်မှာ သေချာပါသလား?</h3>
+            <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm border border-slate-100">
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-500">Date:</span>
+                <span className="font-medium text-slate-700">{formatDate(deletingTransaction.date)}</span>
+              </div>
+              <div className="flex justify-between mb-1">
+                <span className="text-slate-500">Type:</span>
+                <span className={`font-medium ${deletingTransaction.type === 'CREDIT' ? 'text-rose-600' : 'text-emerald-600'}`}>
+                  {deletingTransaction.type === 'CREDIT' ? 'အကြွေးတိုး' : 'ငွေချေ'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Amount:</span>
+                <span className="font-bold text-slate-900">{formatMoney(deletingTransaction.amount)}</span>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-slate-600">
+              ဤလုပ်ဆောင်ချက်ကို ပြန်ပြင်၍မရပါ။ စာရင်းဇယားများ ပြန်လည်ချိန်ညှိသွားပါမည်။
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                className="flex-1 rounded-md bg-slate-100 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-200 transition-colors"
+                onClick={() => setDeletingTransaction(null)}
+                disabled={isSubmitting}
+              >
+                မဖျက်တော့ပါ
+              </button>
+              <button
+                className="flex-1 rounded-md bg-rose-600 py-3 text-sm font-semibold text-white hover:bg-rose-700 transition-colors disabled:opacity-50"
+                onClick={() => setShowPinModal(true)}
+                disabled={isSubmitting}
+              >
+                ဆက်လုပ်မည်
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PIN Verification Modal */}
+      {showPinModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-md">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl border border-slate-200">
+            <div className="text-center mb-8">
+              <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-cyan-50 text-cyan-600 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900">PIN Code လိုအပ်သည်</h3>
+              <p className="mt-2 text-slate-500">လုပ်ဆောင်ချက်ကို အတည်ပြုရန် PIN ရိုက်ထည့်ပါ</p>
+            </div>
+
+            <form onSubmit={handlePinSubmit} className="space-y-6">
+              <div>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  value={pinValue}
+                  onChange={(e) => {
+                    setPinValue(e.target.value.replace(/\D/g, "").slice(0, 6));
+                    setPinError("");
+                  }}
+                  placeholder="• • • • • •"
+                  maxLength="6"
+                  className="w-full px-4 py-4 text-center text-3xl tracking-[0.5em] font-bold border-2 border-slate-200 rounded-xl focus:outline-none focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all"
+                  autoFocus
+                />
+                {pinError && (
+                  <p className="mt-3 text-sm text-center text-rose-600 font-medium">{pinError}</p>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  className="flex-1 rounded-xl bg-slate-100 py-4 text-sm font-bold text-slate-600 hover:bg-slate-200 transition-colors"
+                  onClick={() => {
+                    setShowPinModal(false);
+                    setPinValue("");
+                    setPinError("");
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={pinValue.length !== 6 || isSubmitting}
+                  className="flex-1 rounded-xl bg-cyan-600 py-4 text-sm font-bold text-white hover:bg-cyan-700 shadow-lg shadow-cyan-600/20 transition-all disabled:opacity-50 disabled:shadow-none"
+                >
+                  အတည်ပြုသည်
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
