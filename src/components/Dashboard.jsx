@@ -104,6 +104,7 @@ export default function Dashboard() {
   const [filteredLedgers, setFilteredLedgers] = useState([]);
   const [highlightedCustomerId, setHighlightedCustomerId] = useState(null);
   const [allLedgers, setAllLedgers] = useState([]);
+  const [showTodayPaymentsModal, setShowTodayPaymentsModal] = useState(false);
 
 
   // Show alert notification
@@ -236,6 +237,34 @@ export default function Dashboard() {
       }
     });
     return count;
+  }, [customers]);
+
+  // Get today's payment transactions with customer details
+  const todayPaymentsList = useMemo(() => {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(todayStart);
+    todayEnd.setDate(todayEnd.getDate() + 1);
+
+    const payments = [];
+    customers.forEach(customer => {
+      if (customer.ledgers) {
+        customer.ledgers.forEach(ledger => {
+          const ledgerDate = new Date(ledger.date);
+          // Only include Paid (DEBIT) transactions from today
+          if (ledgerDate >= todayStart && ledgerDate < todayEnd && ledger.type === "DEBIT") {
+            payments.push({
+              ...ledger,
+              customerName: customer.name,
+              customerPhone: customer.phone,
+              customerId: customer.id,
+            });
+          }
+        });
+      }
+    });
+    // Sort by date descending (newest first)
+    return payments.sort((a, b) => new Date(b.date) - new Date(a.date));
   }, [customers]);
 
   // Pagination logic
@@ -760,11 +789,14 @@ export default function Dashboard() {
             </div>
 
             {/* Today&apos;s Transactions */}
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <button
+              onClick={() => setShowTodayPaymentsModal(true)}
+              className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm hover:shadow-md hover:border-emerald-300 transition-all cursor-pointer text-left"
+            >
               <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">ယနေ့ ငွေချေမှုများ</p>
               <p className="mt-2 text-2xl font-bold text-emerald-700">{todayTransactions}</p>
               <p className="mt-1 text-xs text-emerald-500">Today&apos;s Paid Transactions</p>
-            </div>
+            </button>
           </div>
         </section>
 
@@ -1321,6 +1353,116 @@ export default function Dashboard() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Deleting..." : "Move to Bin"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Today's Payments Modal */}
+      {showTodayPaymentsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-xl border border-emerald-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="border-b border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold text-emerald-900">ယနေ့ ငွေချေမှုများ</h3>
+                <p className="mt-1 text-sm text-emerald-700">Today's Paid Transactions</p>
+              </div>
+              <button
+                onClick={() => setShowTodayPaymentsModal(false)}
+                className="text-emerald-600 hover:text-emerald-900 text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="overflow-y-auto flex-1 p-4 sm:p-6">
+              {todayPaymentsList.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-1 md:grid-cols-2">
+                  {todayPaymentsList.map((payment) => (
+                    <div
+                      key={`payment-${payment.id}`}
+                      className="rounded-lg border border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-50/50 p-4 hover:shadow-md hover:border-emerald-300 transition-all"
+                    >
+                      {/* Customer Name */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-slate-900 text-sm">{payment.customerName}</h4>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            {payment.customerPhone || "No phone"}
+                          </p>
+                        </div>
+                        {payment.paymentType === "KPay" && (
+                          <span className="inline-block bg-blue-100 text-blue-700 text-xs font-medium px-2 py-1 rounded">
+                            KPay
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Amount */}
+                      <div className="border-t border-emerald-200/50 pt-3">
+                        <p className="text-xs text-emerald-600 font-medium mb-1">ပေးချေငွေပမာဏ</p>
+                        <p className="text-lg font-bold text-emerald-700">{formatMoney(payment.amount)}</p>
+                      </div>
+
+                      {/* Date and Note */}
+                      <div className="mt-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-600">ရက်စွဲ</span>
+                          <span className="font-medium text-slate-900">{formatDate(payment.date)}</span>
+                        </div>
+                        {payment.note && (
+                          <div className="bg-white/50 rounded px-2 py-1.5 text-xs text-slate-700 border border-emerald-100">
+                            <span className="text-slate-600 block text-xs mb-0.5">မှတ်ချက်</span>
+                            {payment.note}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Sale Details if available */}
+                      {(payment.saleType || payment.cartons || payment.rate) && (
+                        <div className="mt-3 pt-3 border-t border-emerald-200/50 text-xs space-y-1">
+                          {payment.saleType && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-600">အမျိုးအစား:</span>
+                              <span className="font-medium text-slate-900">{payment.saleType}</span>
+                            </div>
+                          )}
+                          {payment.cartons && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-600">Cartons:</span>
+                              <span className="font-medium text-slate-900">{payment.cartons}</span>
+                            </div>
+                          )}
+                          {payment.rate && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-600">Rate:</span>
+                              <span className="font-medium text-slate-900">{formatMoney(payment.rate)}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="text-4xl mb-3">📭</div>
+                  <p className="text-slate-600 font-medium">ယနေ့ ငွေချေမှုမရှိသေးပါ</p>
+                  <p className="text-sm text-slate-500 mt-1">No payments recorded today</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-emerald-200 bg-emerald-50/50 px-6 py-4 text-right">
+              <button
+                onClick={() => setShowTodayPaymentsModal(false)}
+                className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors"
+              >
+                Close
               </button>
             </div>
           </div>
