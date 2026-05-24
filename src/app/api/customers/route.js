@@ -30,14 +30,8 @@ export async function GET(request) {
           },
         ],
       },
-      select: {
-        id: true,
-        name: true,
-        phone: true,
-        routeTag: true,
-        current_balance: true,
-        createdAt: true,
-        deletedAt: true,
+      include: {
+        ledgers: true,
       },
       orderBy: { createdAt: "desc" },
     });
