@@ -1367,7 +1367,7 @@ export default function Dashboard() {
             <div className="border-b border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-4 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold text-emerald-900">ယနေ့ ငွေချေမှုများ</h3>
-                <p className="mt-1 text-sm text-emerald-700">Today's Paid Transactions</p>
+                <p className="mt-1 text-sm text-emerald-700">Today&apos;s Paid Transactions</p>
               </div>
               <button
                 onClick={() => setShowTodayPaymentsModal(false)}
