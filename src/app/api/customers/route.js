@@ -33,7 +33,7 @@ export async function GET(request) {
       include: {
         ledgers: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { name: "asc" },
     });
 
     return NextResponse.json({ data: customers });

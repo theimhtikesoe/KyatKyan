@@ -304,8 +304,8 @@ export default function Dashboard() {
       });
       
       // Optimistic Update: Add new customer to the list immediately
-      setCustomers(prev => [customer, ...prev]);
-      setAllCustomersForKPI(prev => [customer, ...prev]);
+      setCustomers(prev => [...prev, customer].sort((a, b) => a.name.localeCompare(b.name, 'my')));
+      setAllCustomersForKPI(prev => [...prev, customer].sort((a, b) => a.name.localeCompare(b.name, 'my')));
       setNewCustomer({ name: "", phone: "", routeTag: "", current_balance: "" });
       setSelectedCustomerId(customer.id);
       setShowAddCustomer(false);
@@ -653,8 +653,8 @@ export default function Dashboard() {
       
       // Optimistic Update: Update customer in list immediately
       const updateFn = c => c.id === editingCustomer.id ? { ...c, ...editForm } : c;
-      setCustomers(prev => prev.map(updateFn));
-      setAllCustomersForKPI(prev => prev.map(updateFn));
+      setCustomers(prev => prev.map(updateFn).sort((a, b) => a.name.localeCompare(b.name, 'my')));
+      setAllCustomersForKPI(prev => prev.map(updateFn).sort((a, b) => a.name.localeCompare(b.name, 'my')));
       
       const customer = await api(`/api/customers/${editingCustomer.id}`, {
         method: "PATCH",
@@ -723,8 +723,8 @@ export default function Dashboard() {
       });
       
       setDeletedCustomers(prev => prev.filter(c => c.id !== customer.id));
-      setCustomers(prev => [customer, ...prev]);
-      setAllCustomersForKPI(prev => [customer, ...prev]);
+      setCustomers(prev => [...prev, customer].sort((a, b) => a.name.localeCompare(b.name, 'my')));
+      setAllCustomersForKPI(prev => [...prev, customer].sort((a, b) => a.name.localeCompare(b.name, 'my')));
       showAlert(`Customer "${customer.name}" ကို ပြန်လည်ဆယ်ယူပြီးပါပြီ။`, "success");
     } catch (error) {
       showAlert(error.message, "error");
