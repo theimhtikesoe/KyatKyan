@@ -230,7 +230,8 @@ export default function Dashboard() {
       if (customer.ledgers) {
         count += customer.ledgers.filter(ledger => {
           const ledgerDate = new Date(ledger.date);
-          return ledgerDate >= todayStart && ledgerDate < todayEnd;
+          // Only count Paid (DEBIT) transactions
+          return ledgerDate >= todayStart && ledgerDate < todayEnd && ledger.type === "DEBIT";
         }).length;
       }
     });
@@ -684,7 +685,8 @@ export default function Dashboard() {
 
     const todaysTransactions = allLedgers.filter(ledger => {
       const ledgerDate = new Date(ledger.date);
-      return ledgerDate >= todayStart && ledgerDate <= todayEnd;
+      // Only count Paid (DEBIT) transactions
+      return ledgerDate >= todayStart && ledgerDate <= todayEnd && ledger.type === "DEBIT";
     });
 
     const totalBalance = customers.reduce((sum, customer) => sum + (customer.current_balance || 0), 0);
@@ -759,9 +761,9 @@ export default function Dashboard() {
 
             {/* Today&apos;s Transactions */}
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 shadow-sm hover:shadow-md transition-shadow">
-              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">ယနေ့ Transaction များ</p>
+              <p className="text-xs font-medium text-emerald-600 uppercase tracking-wide">ယနေ့ ငွေချေမှုများ</p>
               <p className="mt-2 text-2xl font-bold text-emerald-700">{todayTransactions}</p>
-              <p className="mt-1 text-xs text-emerald-500">Today&apos;s Transactions</p>
+              <p className="mt-1 text-xs text-emerald-500">Today&apos;s Paid Transactions</p>
             </div>
           </div>
         </section>
