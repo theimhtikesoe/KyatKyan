@@ -61,6 +61,7 @@ function AlertNotification({ message, type, onClose }) {
 
 export default function Dashboard() {
   const [customers, setCustomers] = useState([]);
+  const [allCustomersForKPI, setAllCustomersForKPI] = useState([]);
   const [deletedCustomers, setDeletedCustomers] = useState([]);
   const [showRecycleBin, setShowRecycleBin] = useState(false);
   const [pendingKpay, setPendingKpay] = useState([]);
@@ -120,17 +121,19 @@ export default function Dashboard() {
   const loadDashboard = useCallback(async () => {
     setLoading(true);
     try {
-      const [customerRows, kpayRows] = await Promise.all([
+      const [customerRows, kpayRows, allCustomersRows] = await Promise.all([
         api(`/api/customers${search ? `?q=${encodeURIComponent(search)}` : ""}`),
         api("/api/unverified-kpay?status=PENDING"),
+        api("/api/customers"), // Fetch all customers for KPI
       ]);
       setCustomers(customerRows);
       setPendingKpay(kpayRows);
+      setAllCustomersForKPI(allCustomersRows);
       setMessage("");
       
       // Collect all ledgers from all customers
       const allLedgersData = [];
-      for (const customer of customerRows) {
+      for (const customer of allCustomersRows) {
         if (customer.ledgers && Array.isArray(customer.ledgers)) {
           allLedgersData.push(...customer.ledgers);
         }
@@ -210,13 +213,13 @@ export default function Dashboard() {
 
   // Calculate summary metrics
   const totalBalance = useMemo(
-    () => customers.reduce((sum, customer) => sum + (customer.current_balance || 0), 0),
-    [customers],
+    () => allCustomersForKPI.reduce((sum, customer) => sum + (customer.current_balance || 0), 0),
+    [allCustomersForKPI],
   );
 
   const customerCount = useMemo(
-    () => customers.length,
-    [customers],
+    () => allCustomersForKPI.length,
+    [allCustomersForKPI],
   );
 
   // Calculate today's transactions
@@ -227,7 +230,7 @@ export default function Dashboard() {
     todayEnd.setDate(todayEnd.getDate() + 1);
 
     let count = 0;
-    customers.forEach(customer => {
+    allCustomersForKPI.forEach(customer => {
       if (customer.ledgers) {
         count += customer.ledgers.filter(ledger => {
           const ledgerDate = new Date(ledger.date);
@@ -237,7 +240,7 @@ export default function Dashboard() {
       }
     });
     return count;
-  }, [customers]);
+  }, [allCustomersForKPI]);
 
   // Get today's payment transactions with customer details
   const todayPaymentsList = useMemo(() => {
@@ -247,7 +250,7 @@ export default function Dashboard() {
     todayEnd.setDate(todayEnd.getDate() + 1);
 
     const payments = [];
-    customers.forEach(customer => {
+    allCustomersForKPI.forEach(customer => {
       if (customer.ledgers) {
         customer.ledgers.forEach(ledger => {
           const ledgerDate = new Date(ledger.date);
@@ -265,7 +268,7 @@ export default function Dashboard() {
     });
     // Sort by date descending (newest first)
     return payments.sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [customers]);
+  }, [allCustomersForKPI]);
 
   // Pagination logic
   const paginatedCustomers = useMemo(() => {
