@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 // import KPISummaryDashboard from "./KPISummaryDashboard";
 import TransactionFilter from "./TransactionFilter";
+import OverdueNotificationBell from "./OverdueNotificationBell";
 
 
 const money = new Intl.NumberFormat("en-US");
@@ -855,6 +856,7 @@ export default function Dashboard() {
               </h1>
             </div>
             <div className="flex items-center gap-3">
+              <OverdueNotificationBell customers={allCustomersForKPI} />
               <button
                 onClick={() => setShowRecycleBin(true)}
                 className="flex items-center gap-2 rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
